@@ -228,7 +228,7 @@
 
   P.ui = {
     esc: esc, safeUrl: safeUrl, rupiah: rupiah, fmtDate: fmtDate, fmtRange: fmtRange, todayWib: todayWib, countdown: countdown,
-    icon: icon, art: art, img: img, installSprite: installSprite, toast: toast, copyText: copyText, openModal: openModal,
+    addIcons: function (o) { Object.keys(o).forEach(function (k) { ICONS[k] = o[k]; }); }, icon: icon, art: art, img: img, installSprite: installSprite, toast: toast, copyText: copyText, openModal: openModal,
     showBusy: showBusy, hideBusy: hideBusy, themeNow: themeNow, setTheme: setTheme, initials: initials
   };
 })();

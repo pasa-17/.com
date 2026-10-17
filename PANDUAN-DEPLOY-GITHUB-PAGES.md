@@ -34,3 +34,15 @@ Ubah berkas, lalu: `git add .` → `git commit -m "ubah"` → `git push`.
 - Lakukan 1 pendaftaran percobaan di situs asli, cek tiket/email, lalu hapus dari Tempat Sampah admin.
 - Periksa teks statis di beranda yang berasal dari desain: 16 Edisi, rasio 1:6, 100%, 24 Jam.
 - Nomor rekening di PRD tertulis dua versi (717-002-1717 vs 717 0017 178): pastikan yang benar.
+
+## Portal Admin (tahap 2)
+- Buka `https://USERNAME.github.io/NAMA-REPO/admin.html` (atau tombol "Portal Admin" di navbar/footer).
+- Masuk dengan akun `panitia` dan password acak yang tercetak SEKALI saat Anda menjalankan `setupAppEnvironment()` di Apps Script (lihat log eksekusi). Segera ganti di menu **Akun & Sistem**.
+- Menu: Ringkasan Kuota, Verifikasi Bayar, Data Peserta, Scan QR / Masuk, Konten Situs, Pengaturan, Akun & Sistem.
+- Scan QR lewat kamera hanya jalan di HTTPS (GitHub Pages sudah HTTPS) dan butuh izin kamera. Cadangan: ketik kode tiket manual.
+- Sebelum membuka pendaftaran: isi **Pengaturan → Infaq & Rekening** (nomor rekening wajib), kontak, dan link grup WA.
+
+## Memperbarui situs yang sudah tayang dengan ZIP baru
+1. Ekstrak ZIP baru ke folder repositori Anda yang lama (yang berisi folder `.git`), timpa berkas yang sama.
+2. JANGAN menimpa `js/config.js` (isinya alamat server Anda yang sudah benar). Bila terlanjur, isi ulang `GAS_URL`.
+3. Di terminal pada folder itu: `git add .` lalu `git commit -m "tambah portal admin"` lalu `git push`.
