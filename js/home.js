@@ -19,7 +19,7 @@
           (cd ? '<span class="badge badge-glass">' + U.icon('clock') + ' ' + U.esc(cd.label) + '</span>' : '') +
           (open && k.total ? '<span class="badge badge-glass">' + U.icon('users') + ' Sisa kuota ' + k.sisa + ' dari ' + k.total + ' santri</span>' : '') +
         '</div>' +
-        '<div class="eyebrow on-navy">' + U.icon('tent') + ' Pine &amp; Dusk Expedition Camp</div>' +
+        '<div class="eyebrow on-navy">' + U.icon('tent') + ' ' + 'Pesantren Anak Shaleh</div>' +
         '<h1 id="h-hero">' + U.esc(p.hero_judul || p.nama_acara) + '</h1>' +
         '<p class="lead">' + U.esc(p.hero_subjudul || 'Membangun generasi tangguh, mandiri, dan berakhlak Qurani di alam terbuka. Tiga hari penuh berkah merajut ukhuwah, menghidupkan sunnah, dan menyatu dengan keindahan ciptaan-Nya.') + '</p>' +
         '<div class="hero-meta">' +
@@ -33,8 +33,8 @@
           '<button type="button" class="btn btn-on-navy btn-lg" data-scroll="kegiatan">Pelajari Kegiatan</button>' +
         '</div>' +
       '</div>' +
-      '<div class="hero-art">' + U.img(p.hero_foto, 'Suasana perkemahan di hutan pinus Lembang', '', 'night') +
-        '<div class="hero-chip"><span class="ic">' + U.icon('moon') + '</span><span><b>Sholat Berjamaah &amp; Mabit</b>Di bawah naungan rimba pinus</span></div>' +
+      '<div class="hero-art">' + U.img(p.hero_foto, 'Suasana perkemahan ' + (p.nama_singkat || 'PASA'), '', 'night') +
+        '<div class="hero-chip"><span class="ic">' + U.icon('moon') + '</span><span><b>Sholat Berjamaah &amp; Mabit</b>Di bawah naungan alam terbuka</span></div>' +
       '</div></section>' +
       '<div class="stats" role="list">' +
         '<div class="stat" role="listitem"><b>16 Edisi</b><span>Kiprah sejak 2008 membina santri</span></div>' +
@@ -104,7 +104,7 @@
     if (!v.length) return '';
     return '<section class="sec" id="video" aria-labelledby="h-video"><div class="video">' +
       '<div class="v-copy"><div class="eyebrow on-navy">Video dokumentasi PASA</div><h2 id="h-video">Saksikan Hangatnya Kenangan PASA Tahun Lalu</h2>' +
-      '<p>Tonton cuplikan kebersamaan santri: dari halaqah subuh, tantangan outbound, hingga muhasabah di bawah naungan pinus Lembang.</p>' +
+      '<p>Tonton cuplikan kebersamaan santri: dari halaqah subuh, tantangan outbound, hingga muhasabah di alam terbuka.</p>' +
       '<p id="vTitle" style="color:var(--on-navy);font-weight:700"></p>' +
       (v.length > 1 ? '<div class="v-list" role="group" aria-label="Pilih video">' + v.map(function (x, i) { return '<button type="button" data-v="' + i + '" aria-pressed="' + (i === 0) + '">' + U.esc(x.judul || 'Video ' + (i + 1)) + '</button>'; }).join('') + '</div>' : '') +
       '</div><div class="player" id="player"></div></div></section>';
@@ -235,7 +235,7 @@
   }
 
   P.pages.home = {
-    title: 'PASA 17 — Pesantren Anak Shaleh ke-17 | Pine Forest Camp Lembang',
+    title: 'home', isHome: true,
     needsData: true,
     mount: function (el, pub) { render(el, pub); this._el = el; },
     update: function (pub) { if (this._el && sig(pub) !== lastSig) render(this._el, pub); },

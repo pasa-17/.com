@@ -35,7 +35,7 @@
   // ---------- sesi ----------
   function load() { try { var o = JSON.parse(sessionStorage.getItem(KEY) || 'null'); if (o && o.token) S = o; } catch (e) { /* abaikan */ } }
   function save() { try { sessionStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* abaikan */ } }
-  function clear() { S = { token: '', nama: '', username: '' }; try { sessionStorage.removeItem(KEY); } catch (e) { /* abaikan */ } }
+  function clear() { S = { token: '', nama: '', username: '' }; SW = {}; if (typeof ST !== 'undefined') { ST.ready = false; ST.peserta = []; ST.checkin = []; ST.dash = null; } BK = {}; BKo = []; try { sessionStorage.removeItem(KEY); } catch (e) { /* abaikan */ } }
   M.session = function () { return S; };
   M.setSession = function (d) { S = { token: d.token, nama: d.nama, username: d.username }; save(); };
   M.clearSession = clear;
@@ -43,7 +43,10 @@
   M.onAuthLost = function () { };
 
   // Pemanggilan API admin. Sesi habis → kembali ke layar masuk.
+  var READ = /^admin(List|Get|Log|Me|Dashboard|Export|Riwayat|Bootstrap|EmailUji)/;
+  var SW = {};   // cache baca ringan untuk menu Konten/Pengaturan/Akun
   M.call = function (action, data, timeout) {
+    if (!READ.test(action)) SW = {};
     return A.post(action, data || {}, timeout || 60000, S.token).then(function (r) {
       if (r && r.code === 'AUTH') { clear(); M.onAuthLost(r.message); var e = new Error(r.message); e.auth = true; throw e; }
       return r;
@@ -61,6 +64,113 @@
       if (!o.quiet) U.toast(e && e.message ? e.message : 'Tidak dapat terhubung ke server.', 'err');
       return null;
     });
+  };
+
+  // Tampilkan data tersimpan dulu (langsung), lalu segarkan dari server bila berbeda.
+  // handler(r) dipanggil dengan cache, kemudian dengan data baru; r = null bila gagal dan belum ada cache.
+  M.swr = function (action, data, handler) {
+    var key = action + JSON.stringify(data || {}), hit = SW[key], seen = hit ? JSON.stringify(hit) : '';
+    if (hit) handler(hit);
+    M.run(action, data, { quiet: true }).then(function (r) {
+      if (!r) { if (!hit) handler(null); return; }
+      var now = JSON.stringify(r);
+      SW[key] = r;
+      if (!hit || now !== seen) handler(r);
+    });
+  };
+
+  // ---------- penyimpanan data panitia ----------
+  // Peserta, sesi, ukuran, dan check-in dimuat SEKALI lewat adminBootstrap lalu disimpan di memori
+  // (sengaja tidak ditulis ke disk karena berisi data anak). Pencarian, filter, penghitungan, dan
+  // perubahan status dikerjakan di browser, sehingga layar tidak menunggu server.
+  var STATUS_L = ['Menunggu Bukti', 'Bukti Sedang Dicek', 'Lunas', 'Bukti Ditolak'];
+  var ST = { ready: false, peserta: [], sesi: [], ukuran: [], checkin: [], dash: null, at: 0 };
+  var subs = [], inflight = null, pending = 0, refreshTimer = 0;
+  function notify() { subs.slice().forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
+  function apply(d) {
+    ST.peserta = d.peserta || []; ST.sesi = d.sesi || []; ST.ukuran = d.ukuran || []; ST.checkin = d.checkin || [];
+    ST.dash = d.dashboard || null; ST.ready = true; ST.at = Date.now(); notify();
+  }
+  M.store = {
+    data: ST,
+    ready: function () { return ST.ready; },
+    on: function (fn) { subs.push(fn); return function () { subs = subs.filter(function (f) { return f !== fn; }); }; },
+    // force=false: pakai data bila masih baru (< 5 dtk). Mengembalikan promise; gagal bila server tak terjangkau.
+    load: function (force) {
+      if (inflight) return inflight;
+      if (!force && ST.ready && Date.now() - ST.at < 5000) return Promise.resolve(ST);
+      inflight = M.call('adminBootstrap', {}, 60000).then(function (r) {
+        inflight = null;
+        if (!r || !r.success) throw new Error((r && r.message) || 'Gagal memuat data.');
+        if (pending > 0) { ST.at = Date.now(); return ST; }   // ada perubahan yang belum terkirim: jangan timpa tampilan
+        apply(r.data); return ST;
+      }, function (e) { inflight = null; throw e; });
+      return inflight;
+    },
+    // Lacak perubahan yang sedang dikirim; setelah semuanya selesai, selaraskan dengan server secara diam-diam.
+    track: function (promise) {
+      pending++;
+      var fin = function () {
+        pending = Math.max(0, pending - 1);
+        if (!pending) { clearTimeout(refreshTimer); refreshTimer = setTimeout(function () { M.store.load(true).catch(function () { }); }, 700); }
+      };
+      promise.then(fin, fin); return promise;
+    },
+    // Ubah baris peserta di memori; kembalikan fungsi pembatal.
+    patch: function (ids, patch) {
+      var set = {}; ids.forEach(function (i) { set[i] = 1; }); var old = [];
+      ST.peserta.forEach(function (p) {
+        if (!set[p.id]) return; var o = {};
+        Object.keys(patch).forEach(function (k) { o[k] = p[k]; p[k] = patch[k]; }); p._s = null; old.push([p, o]);
+      });
+      notify();
+      return function () { old.forEach(function (x) { Object.keys(x[1]).forEach(function (k) { x[0][k] = x[1][k]; }); x[0]._s = null; }); notify(); };
+    },
+    remove: function (ids) {
+      var set = {}; ids.forEach(function (i) { set[i] = 1; });
+      var gone = ST.peserta.filter(function (p) { return set[p.id]; });
+      ST.peserta = ST.peserta.filter(function (p) { return !set[p.id]; }); notify();
+      return function () { ST.peserta = ST.peserta.concat(gone); notify(); };
+    },
+    find: function (code) {
+      code = String(code || '').trim().toUpperCase(); if (!code) return null;
+      for (var i = 0; i < ST.peserta.length; i++) { var p = ST.peserta[i]; if ((p.qr && String(p.qr).toUpperCase() === code) || String(p.kode).toUpperCase() === code) return p; }
+      return null;
+    },
+    addCheckin: function (c) { ST.checkin.unshift(c); notify(); return function () { var i = ST.checkin.indexOf(c); if (i >= 0) ST.checkin.splice(i, 1); notify(); }; },
+    removeCheckin: function (c) { var i = ST.checkin.indexOf(c); if (i >= 0) { ST.checkin.splice(i, 1); notify(); } return function () { ST.checkin.unshift(c); notify(); }; },
+    // Angka ringkasan dihitung ulang dari data lokal agar ikut berubah seketika.
+    dashboard: function () {
+      var d = Object.assign({}, ST.dash), rows = ST.peserta;
+      var st = {}; STATUS_L.forEach(function (s) { st[s] = 0; }); var ter = 0, pen = 0, hari = {};
+      rows.forEach(function (p) {
+        st[p.statusInfaq] = (st[p.statusInfaq] || 0) + 1;
+        if (p.statusInfaq === 'Lunas') ter += Number(p.infaq) || 0;
+        if (p.statusInfaq === 'Bukti Sedang Dicek') pen += Number(p.infaq) || 0;
+        var k = String(p.dibuat || '').slice(0, 10); if (k) hari[k] = (hari[k] || 0) + 1;
+      });
+      var sesi = ST.sesi.filter(function (s) { return s.aktif === 'true'; })[0], hadir = {};
+      if (sesi) ST.checkin.forEach(function (c) { if (c.sesiId === sesi.id) hadir[c.pid] = 1; });
+      d.totalPendaftar = rows.length; d.sisaKuota = Math.max(0, (d.kuota || 0) - rows.length);
+      d.statusInfaq = st; d.infaq = Object.assign({}, d.infaq, { terhimpun: ter, pending: pen });
+      d.rekapUkuran = ST.ukuran.map(function (u) { return { label: u.label, aktif: u.aktif === 'true', jumlah: rows.filter(function (p) { return p.ukuran === u.label; }).length }; });
+      d.kehadiran = { hadir: Object.keys(hadir).length, total: rows.length, sesi: sesi ? sesi.nama : '' };
+      d.grafikHarian = Object.keys(hari).sort().map(function (k) { return { tanggal: k, jumlah: hari[k] }; });
+      return d;
+    }
+  };
+
+  // Bukti transfer: diambil sekali, disimpan sementara (maks. 12), dan bisa dimuat lebih awal saat kursor di atas tombol.
+  var BK = {}, BKo = [];
+  M.bukti = function (id) {
+    if (BK[id]) return BK[id];
+    var pr = M.call('adminGetBukti', { id: id }, 90000).then(function (r) {
+      if (!r || !r.success) throw new Error((r && r.message) || 'Bukti tidak dapat dimuat.');
+      return r.data;
+    });
+    BK[id] = pr; BKo.push(id); if (BKo.length > 12) delete BK[BKo.shift()];
+    pr.catch(function () { delete BK[id]; });
+    return pr;
   };
 
   // ---------- helper ----------

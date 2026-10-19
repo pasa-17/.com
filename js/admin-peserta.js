@@ -12,12 +12,11 @@
   // =====================================================================
   M.pages.dashboard = function (el) {
     el.innerHTML = '<div class="page-head"><div><h1>Portal Panitia</h1><p class="muted" id="dSub">Memuat ringkasan…</p></div><div class="head-acts" id="dActs"></div></div><div id="dBody">' + M.skeleton(3) + '</div>';
-    var alive = true;
+    var alive = true, off = null;
+    function show() { if (alive && M.store.ready()) draw(M.store.dashboard()); }
     function load() {
-      M.run('adminDashboard', {}, { quiet: true }).then(function (r) {
-        if (!alive) return;
-        if (!r) { el.querySelector('#dBody').innerHTML = M.empty('alert', 'Gagal memuat', 'Periksa koneksi lalu muat ulang halaman.'); return; }
-        draw(r.data);
+      M.store.load().then(show, function (e) {
+        if (alive && !M.store.ready() && !e.auth) el.querySelector('#dBody').innerHTML = M.empty('alert', 'Gagal memuat', 'Periksa koneksi lalu muat ulang halaman.');
       });
     }
     function draw(d) {
@@ -54,14 +53,17 @@
         var want = !open; var sw = this; sw.disabled = true;
         M.confirm(want ? 'Buka pendaftaran?' : 'Tutup pendaftaran?', want ? 'Wali dapat mulai mendaftar lewat situs.' : 'Formulir pendaftaran akan ditutup untuk umum.', want ? 'Buka' : 'Tutup', !want).then(function (ok) {
           if (!ok) { sw.disabled = false; return; }
-          M.run('adminSetPendaftaran', { buka: want }, { ok: true }).then(function () { load(); });
+          var pf = M.store.data.dash && M.store.data.dash.pendaftaran, was = pf && pf.status;
+          if (pf) { pf.status = want ? 'buka' : 'tutup'; show(); }
+          M.run('adminSetPendaftaran', { buka: want }, { ok: true }).then(function (r) { if (!r && pf) { pf.status = was; show(); } M.store.load(true).then(show, function () { }); });
         });
       });
       el.querySelector('#csvBtn').addEventListener('click', function () { exportCsv(this); });
       el.querySelector('#blastBtn').addEventListener('click', blast);
     }
-    load();
-    return function () { alive = false; };
+    off = M.store.on(show);
+    show(); load();
+    return function () { alive = false; if (off) off(); };
   };
 
   function exportCsv(btn) {
@@ -77,9 +79,8 @@
   function blast() {
     var m = U.openModal({ title: 'Kirim ulang e-tiket', html: '<div id="bl"><p>Mencari wali yang belum menerima e-tiket…</p></div>' });
     var box = m.body.querySelector('#bl');
-    M.run('adminListPeserta', { status: 'Lunas', pageSize: 200 }).then(function (r) {
-      if (!r) { m.close(); return; }
-      var todo = r.data.items.filter(function (p) { return p.emailStatus !== 'terkirim'; });
+    M.store.load(true).then(function () {
+      var todo = M.store.data.peserta.filter(function (p) { return p.statusInfaq === 'Lunas' && p.emailStatus !== 'terkirim'; });
       if (!todo.length) { box.innerHTML = M.empty('check-circle', 'Semua sudah terkirim', 'Tidak ada wali berstatus Lunas yang emailnya belum terkirim.'); return; }
       box.innerHTML = '<p><b>' + todo.length + '</b> wali berstatus Lunas belum menerima e-tiket. Kirim sekarang (' + Math.ceil(todo.length / 25) + ' gelombang, 25 email per gelombang)?</p><div class="meter"><i id="blBar" style="width:0"></i></div><p class="help" id="blTxt"></p><div class="acts"><button type="button" class="btn btn-soft" data-c>Batal</button><button type="button" class="btn btn-primary" id="blGo">Kirim</button></div>';
       box.querySelector('[data-c]').addEventListener('click', function () { m.close(); });
@@ -88,7 +89,7 @@
         btn.disabled = true;
         (function next() {
           if (i >= todo.length || stop) {
-            box.querySelector('#blTxt').textContent = 'Selesai: ' + sent + ' terkirim, ' + fail + ' gagal.'; btn.remove(); return;
+            box.querySelector('#blTxt').textContent = 'Selesai: ' + sent + ' terkirim, ' + fail + ' gagal.'; btn.remove(); M.store.load(true).catch(function () { }); return;
           }
           var chunk = todo.slice(i, i + 25).map(function (p) { return p.id; });
           M.run('adminKirimUlangEmail', { ids: chunk }, { timeout: 120000 }).then(function (rr) {
@@ -100,24 +101,47 @@
           });
         })();
       });
-    });
+    }, function (e) { m.close(); if (!e.auth) U.toast(e.message, 'err'); });
   }
 
   // =====================================================================
   // DAFTAR PESERTA (dipakai Verifikasi Bayar & Data Peserta)
   // =====================================================================
   var TABS = [['', 'Semua', 'semua'], ['Bukti Sedang Dicek', 'Perlu Verifikasi', 'Bukti Sedang Dicek'], ['Lunas', 'Lunas', 'Lunas'], ['Menunggu Bukti', 'Menunggu Bukti', 'Menunggu Bukti'], ['Bukti Ditolak', 'Ditolak', 'Bukti Ditolak']];
-  var ukuranCache = null;
+
+  function blob(p) { return p._s || (p._s = [p.nama, p.panggilan, p.wali, p.kode, p.wa, p.email, p.sekolah].join(' ').toLowerCase()); }
+
+  // Dialog alasan penolakan (dipakai daftar & penampil bukti). cb(alasan) dipanggil saat dikonfirmasi.
+  function askReject(ids, nama, cb) {
+    var m = U.openModal({ title: 'Tolak bukti transfer', html: '<p>' + (nama ? 'Bukti transfer <b>' + h(nama) + '</b> ' : 'Bukti transfer yang dipilih ') + 'akan ditandai Ditolak. Tulis alasan agar wali tahu apa yang perlu diperbaiki (tampil di data panitia).</p>' +
+      M.fieldHtml('tAlasan', 'Alasan penolakan', { type: 'textarea', rows: 3, ph: 'Contoh: Nominal tidak sesuai / foto buram' }) +
+      '<div class="acts"><button type="button" class="btn btn-soft" data-c>Batal</button><button type="button" class="btn btn-danger" data-ok>Tolak bukti</button></div>' });
+    m.body.querySelector('[data-c]').addEventListener('click', m.close);
+    m.body.querySelector('[data-ok]').addEventListener('click', function () { var a = M.val(m.body, 'tAlasan').trim(); m.close(); cb(a || 'Bukti tidak sesuai'); });
+    var t = m.body.querySelector('#tAlasan'); if (t) t.focus();
+  }
+
+  // Ubah status infaq: tampilan berubah SEKETIKA, server menyusul; bila gagal, dikembalikan dan diberi tahu.
+  function setStatus(ids, status, catatan) {
+    var data = { ids: ids, status: status }, patch = { statusInfaq: status };
+    if (catatan != null) { data.catatan = catatan; patch.catatanPanitia = catatan; }
+    var undo = M.store.patch(ids, patch);
+    var pr = M.call('adminSetStatusInfaq', data).then(function (r) {
+      if (!r || !r.success) throw new Error((r && r.message) || 'Gagal menyimpan.');
+      U.toast(r.message || 'Tersimpan.', 'ok');
+    }).catch(function (e) { if (e && e.auth) return; undo(); U.toast((e && e.message || 'Gagal menyimpan') + ' Perubahan dibatalkan.', 'err'); });
+    return M.store.track(pr);
+  }
 
   function listPage(mode) {
     return function (el) {
       var q = { status: mode === 'bayar' ? 'Bukti Sedang Dicek' : '', q: '', ukuran: '', page: 1, pageSize: 25 };
-      var sel = {}, rows = [], counts = {}, total = 0, alive = true, seq = 0;
+      var sel = {}, rows = [], counts = {}, total = 0, alive = true, off = null;
       el.innerHTML = '<div class="page-head"><div><h1>' + (mode === 'bayar' ? 'Verifikasi Pembayaran' : 'Data Peserta') + '</h1><p class="muted">' + (mode === 'bayar' ? 'Periksa bukti transfer lalu setujui (ACC) atau tolak.' : 'Cari, ubah, dan kelola seluruh data santri.') + '</p></div>' +
         '<div class="head-acts"><button type="button" class="btn btn-soft btn-sm" id="csv">' + U.icon('download') + ' Ekspor CSV</button>' +
         (mode === 'peserta' ? '<button type="button" class="btn btn-soft btn-sm" id="trash">' + U.icon('trash') + ' Tempat Sampah</button><button type="button" class="btn btn-primary btn-sm" id="add">' + U.icon('plus') + ' Tambah Peserta</button>' : '') + '</div></div>' +
         '<section class="card list-card"><div class="toolbar"><div class="tabs" id="tabs" role="tablist"></div><div class="tb-right"><div class="search">' + U.icon('search') + '<input type="search" id="q" placeholder="Cari nama, wali, kode, WA…" aria-label="Cari peserta"></div><select class="select sm" id="ukr" aria-label="Filter ukuran kaos"><option value="">Semua kaos</option></select></div></div>' +
-        '<div class="bulk" id="bulk" hidden></div><div id="rows" class="rows"></div><div class="pager" id="pager"></div></section>';
+        '<div class="bulk" id="bulk" hidden></div><div id="rows" class="rows">' + (M.store.ready() ? '' : M.skeleton(4)) + '</div><div class="pager" id="pager"></div></section>';
       var rowsEl = el.querySelector('#rows');
 
       function tabs() {
@@ -126,14 +150,24 @@
           return '<button type="button" role="tab" class="tab' + (q.status === t[0] ? ' on' : '') + '" data-s="' + h(t[0]) + '" aria-selected="' + (q.status === t[0]) + '">' + h(t[1]) + ' <span>' + num(c) + '</span></button>';
         }).join('');
       }
+      // Saring, cari, urutkan, dan potong halaman — semuanya di browser.
+      function compute() {
+        var all = M.store.data.peserta, f = all, needle = q.q.toLowerCase();
+        counts = { semua: all.length }; STATUS.forEach(function (s) { counts[s] = 0; });
+        all.forEach(function (p) { counts[p.statusInfaq] = (counts[p.statusInfaq] || 0) + 1; });
+        if (q.status) f = f.filter(function (p) { return p.statusInfaq === q.status; });
+        if (q.ukuran) f = f.filter(function (p) { return p.ukuran === q.ukuran; });
+        if (needle) f = f.filter(function (p) { return blob(p).indexOf(needle) >= 0; });
+        f = f.slice().sort(function (a, b) { return a.dibuat < b.dibuat ? 1 : a.dibuat > b.dibuat ? -1 : 0; });
+        total = f.length;
+        q.page = Math.min(q.page, Math.max(1, Math.ceil(total / q.pageSize)));
+        rows = f.slice((q.page - 1) * q.pageSize, q.page * q.pageSize);
+        var ids = {}; all.forEach(function (p) { ids[p.id] = 1; }); Object.keys(sel).forEach(function (k) { if (!ids[k]) delete sel[k]; });
+      }
+      function render() { if (!alive || !M.store.ready()) return; compute(); tabs(); draw(); bulk(); }
       function load() {
-        var my = ++seq;
-        rowsEl.innerHTML = M.skeleton(4);
-        M.run('adminListPeserta', q, { quiet: true }).then(function (r) {
-          if (!alive || my !== seq) return;
-          if (!r) { rowsEl.innerHTML = M.empty('alert', 'Gagal memuat data', 'Periksa koneksi, lalu coba lagi.'); return; }
-          rows = r.data.items; counts = r.data.counts; total = r.data.total; sel = {};
-          tabs(); draw(); bulk();
+        M.store.load().then(render, function (e) {
+          if (alive && !M.store.ready() && !e.auth) rowsEl.innerHTML = M.empty('alert', 'Gagal memuat data', 'Periksa koneksi, lalu muat ulang halaman.');
         });
       }
       function rowHtml(p) {
@@ -169,38 +203,29 @@
         if (!ids.length) return;
         b.innerHTML = '<b>' + ids.length + ' dipilih</b><button type="button" class="btn btn-ok btn-sm" data-b="Lunas">ACC (Lunas)</button><button type="button" class="btn btn-soft btn-sm" data-b="Menunggu Bukti">Menunggu Bukti</button><button type="button" class="btn btn-no btn-sm" data-b="Bukti Ditolak">Tolak</button><button type="button" class="btn btn-soft btn-sm" data-b="__mail">' + U.icon('mail') + ' Kirim ulang email</button><button type="button" class="btn btn-danger btn-sm" data-b="__del">' + U.icon('trash') + ' Hapus</button><button type="button" class="btn btn-soft btn-sm" data-b="__none">Batal pilih</button>';
       }
-      function setStatus(ids, status, catatan) {
-        var data = { ids: ids, status: status }; if (catatan != null) data.catatan = catatan;
-        return M.run('adminSetStatusInfaq', data, { ok: true }).then(function (r) { if (r) load(); return r; });
-      }
-      function tolak(ids, nama) {
-        var m = U.openModal({ title: 'Tolak bukti transfer', html: '<p>' + (nama ? 'Bukti transfer <b>' + h(nama) + '</b> ' : 'Bukti transfer yang dipilih ') + 'akan ditandai Ditolak. Tulis alasan agar wali tahu apa yang perlu diperbaiki (tampil di data panitia).</p>' +
-          M.fieldHtml('tAlasan', 'Alasan penolakan', { type: 'textarea', rows: 3, ph: 'Contoh: Nominal tidak sesuai / foto buram' }) +
-          '<div class="acts"><button type="button" class="btn btn-soft" data-c>Batal</button><button type="button" class="btn btn-danger" data-ok>Tolak bukti</button></div>' });
-        m.body.querySelector('[data-c]').addEventListener('click', m.close);
-        m.body.querySelector('[data-ok]').addEventListener('click', function () { var a = M.val(m.body, 'tAlasan').trim(); m.close(); setStatus(ids, 'Bukti Ditolak', a || 'Bukti tidak sesuai'); });
-      }
       function find(id) { return rows.filter(function (p) { return p.id === id; })[0]; }
 
       // peristiwa
       el.addEventListener('click', function (e) {
         var t = e.target, tab = t.closest('.tab');
-        if (tab) { q.status = tab.getAttribute('data-s'); q.page = 1; return load(); }
+        if (tab) { q.status = tab.getAttribute('data-s'); q.page = 1; return render(); }
         var pg = t.closest('[data-pg]');
-        if (pg) { q.page += parseInt(pg.getAttribute('data-pg'), 10); load(); window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+        if (pg) { q.page += parseInt(pg.getAttribute('data-pg'), 10); render(); window.scrollTo({ top: 0 }); return; }
         var bb = t.closest('[data-b]');
         if (bb) {
           var act = bb.getAttribute('data-b'), ids = Object.keys(sel).filter(function (k) { return sel[k]; });
-          if (act === '__none') { sel = {}; draw(); return bulk(); }
+          if (act === '__none') { sel = {}; return render(); }
           if (act === '__mail') {
             if (ids.length > 25) return U.toast('Maksimal 25 email sekali kirim. Kurangi pilihan.', 'err');
-            return M.run('adminKirimUlangEmail', { ids: ids }, { ok: true, timeout: 120000 }).then(function () { load(); });
+            return M.run('adminKirimUlangEmail', { ids: ids }, { ok: true, timeout: 120000 }).then(function () { M.store.load(true).catch(function () { }); });
           }
           if (act === '__del') return M.confirm('Hapus ' + ids.length + ' peserta?', 'Data dipindah ke Tempat Sampah dan masih bisa dipulihkan.', 'Pindah ke sampah', true).then(function (ok) {
-            if (ok) M.run('adminHapusPeserta', { ids: ids }, { ok: true }).then(function () { load(); });
+            if (!ok) return;
+            var undo = M.store.remove(ids); sel = {};
+            M.store.track(M.run('adminHapusPeserta', { ids: ids }, { ok: true }).then(function (r) { if (!r) undo(); }));
           });
-          if (act === 'Bukti Ditolak') return tolak(ids);
-          return M.confirm('Ubah status ' + ids.length + ' peserta?', 'Status infaq menjadi "' + act + '".', 'Ubah').then(function (ok) { if (ok) setStatus(ids, act); });
+          if (act === 'Bukti Ditolak') return askReject(ids, '', function (a) { sel = {}; setStatus(ids, act, a); });
+          return M.confirm('Ubah status ' + ids.length + ' peserta?', 'Status infaq menjadi "' + act + '".', 'Ubah').then(function (ok) { if (ok) { sel = {}; setStatus(ids, act); } });
         }
         var row = t.closest('.prow[data-id]'); if (!row) return;
         var p = find(row.getAttribute('data-id')); if (!p) return;
@@ -208,25 +233,32 @@
           if (p.statusInfaq === 'Menunggu Bukti') return M.confirm('ACC tanpa bukti?', p.nama + ' belum mengunggah bukti. Tandai Lunas (mis. bayar tunai)?', 'Tandai Lunas').then(function (ok) { if (ok) setStatus([p.id], 'Lunas', ''); });
           return setStatus([p.id], 'Lunas', '');
         }
-        if (t.closest('[data-tolak]')) return tolak([p.id], p.nama);
-        if (t.closest('[data-bukti]')) return showBukti(p, load);
-        if (t.closest('[data-edit]')) return pesertaForm(p, load);
+        if (t.closest('[data-tolak]')) return askReject([p.id], p.nama, function (a) { setStatus([p.id], 'Bukti Ditolak', a); });
+        if (t.closest('[data-bukti]')) return showBukti(p);
+        if (t.closest('[data-edit]')) return pesertaForm(p);
       });
       el.addEventListener('change', function (e) {
         if (e.target.matches('[data-sel]')) { var id = e.target.closest('.prow').getAttribute('data-id'); sel[id] = e.target.checked; bulk(); }
-        if (e.target.id === 'ukr') { q.ukuran = e.target.value; q.page = 1; load(); }
+        if (e.target.id === 'ukr') { q.ukuran = e.target.value; q.page = 1; render(); }
       });
-      el.querySelector('#q').addEventListener('input', M.debounce(function (e) { q.q = e.target.value.trim(); q.page = 1; load(); }, 350));
+      el.querySelector('#q').addEventListener('input', M.debounce(function (e) { q.q = e.target.value.trim(); q.page = 1; render(); }, 60));
+      // Bukti dimuat lebih awal begitu kursor/jari mendekati tombolnya.
+      var warm = function (e) { var b = e.target.closest && e.target.closest('[data-bukti]'); if (!b) return; var r = b.closest('.prow[data-id]'); if (r) M.bukti(r.getAttribute('data-id')).catch(function () { }); };
+      el.addEventListener('mouseover', warm); el.addEventListener('touchstart', warm, { passive: true });
       el.querySelector('#csv').addEventListener('click', function () { exportCsv(this); });
-      var add = el.querySelector('#add'); if (add) add.addEventListener('click', function () { pesertaForm(null, load); });
-      var tr = el.querySelector('#trash'); if (tr) tr.addEventListener('click', function () { trashModal(load); });
+      var add = el.querySelector('#add'); if (add) add.addEventListener('click', function () { pesertaForm(null); });
+      var tr = el.querySelector('#trash'); if (tr) tr.addEventListener('click', function () { trashModal(); });
 
-      (ukuranCache ? Promise.resolve(ukuranCache) : M.run('adminListModul', { modul: 'ukuran' }, { quiet: true }).then(function (r) { return r ? (ukuranCache = r.data.items) : []; })).then(function (list) {
-        if (!alive) return;
-        var s = el.querySelector('#ukr'); (list || []).forEach(function (u) { s.insertAdjacentHTML('beforeend', '<option value="' + h(u.label) + '">Kaos ' + h(u.label) + '</option>'); });
-      });
+      function fillUkuran() {
+        var s = el.querySelector('#ukr'); if (!s || s.options.length > 1) return;
+        M.store.data.ukuran.forEach(function (u) { s.insertAdjacentHTML('beforeend', '<option value="' + h(u.label) + '">Kaos ' + h(u.label) + '</option>'); });
+        if (q.ukuran) s.value = q.ukuran;
+      }
+      off = M.store.on(function () { render(); fillUkuran(); });
+      if (M.store.ready()) { render(); fillUkuran(); }
+      M.store.load(true).then(function () { }, function () { });
       load();
-      return function () { alive = false; };
+      return function () { alive = false; if (off) off(); };
     };
   }
   M.pages.bayar = listPage('bayar');
@@ -238,28 +270,22 @@
     for (var i = 0; i < n; i++) a[i] = bin.charCodeAt(i);
     return new Blob([a], { type: mime });
   }
-  function showBukti(p, after) {
+  function showBukti(p) {
     var m = U.openModal({ title: 'Bukti transfer · ' + p.kode, cls: 'wide', html: '<div class="proof"><div class="proof-meta"><b>' + h(p.nama) + '</b><span>' + U.rupiah(p.infaq) + ' · <span class="badge ' + M.statusClass(p.statusInfaq) + '">' + h(M.statusLabel(p.statusInfaq)) + '</span></span></div><div class="proof-view" id="pv"><div class="spin" aria-hidden="true"></div><p>Memuat bukti…</p></div>' +
       '<div class="acts"><button type="button" class="btn btn-no" data-t>' + U.icon('x') + ' Tolak</button><button type="button" class="btn btn-ok" data-a>' + U.icon('check') + ' ACC Lunas</button></div></div>' });
     var url = '';
     function done() { if (url) URL.revokeObjectURL(url); }
-    M.run('adminGetBukti', { id: p.id }, { timeout: 90000 }).then(function (r) {
+    M.bukti(p.id).then(function (data) {
       var pv = m.body.querySelector('#pv'); if (!pv) return;
-      if (!r) { pv.innerHTML = M.empty('alert', 'Bukti tidak dapat dimuat'); return; }
-      var b = b64Blob(r.data.base64, r.data.mime); url = URL.createObjectURL(b);
-      pv.innerHTML = r.data.mime === 'application/pdf'
+      var b = b64Blob(data.base64, data.mime); url = URL.createObjectURL(b);
+      pv.innerHTML = data.mime === 'application/pdf'
         ? '<iframe src="' + url + '" title="Bukti transfer PDF"></iframe><a class="btn btn-soft btn-sm" href="' + url + '" target="_blank" rel="noopener">Buka PDF di tab baru</a>'
         : '<img src="' + url + '" alt="Bukti transfer ' + h(p.nama) + '">';
-    });
+    }, function (e) { var pv = m.body.querySelector('#pv'); if (pv && !e.auth) pv.innerHTML = M.empty('alert', 'Bukti tidak dapat dimuat', e.message); });
     function act(status) {
       done(); m.close();
-      if (status === 'Bukti Ditolak') {
-        var t = U.openModal({ title: 'Tolak bukti transfer', html: '<p>Tulis alasan penolakan:</p>' + M.fieldHtml('tAlasan2', 'Alasan', { type: 'textarea', rows: 3, ph: 'Contoh: Nominal tidak sesuai' }) + '<div class="acts"><button type="button" class="btn btn-soft" data-c>Batal</button><button type="button" class="btn btn-danger" data-ok>Tolak bukti</button></div>' });
-        t.body.querySelector('[data-c]').addEventListener('click', t.close);
-        t.body.querySelector('[data-ok]').addEventListener('click', function () { var a = M.val(t.body, 'tAlasan2').trim(); t.close(); M.run('adminSetStatusInfaq', { ids: [p.id], status: status, catatan: a || 'Bukti tidak sesuai' }, { ok: true }).then(after); });
-        return;
-      }
-      M.run('adminSetStatusInfaq', { ids: [p.id], status: status, catatan: '' }, { ok: true }).then(after);
+      if (status === 'Bukti Ditolak') return askReject([p.id], p.nama, function (a) { setStatus([p.id], status, a); });
+      setStatus([p.id], status, '');
     }
     m.body.querySelector('[data-a]').addEventListener('click', function () { act('Lunas'); });
     m.body.querySelector('[data-t]').addEventListener('click', function () { act('Bukti Ditolak'); });
@@ -267,10 +293,10 @@
   }
 
   // ---------- tambah / ubah peserta ----------
-  function pesertaForm(p, after) {
+  function pesertaForm(p) {
     var edit = !!p; p = p || {};
-    M.run('adminListModul', { modul: 'ukuran' }, { quiet: true }).then(function (r) {
-      var ukr = (r ? r.data.items : []).filter(function (u) { return u.aktif === 'true' || u.label === p.ukuran; });
+    (M.store.ready() ? Promise.resolve(M.store.data.ukuran) : M.run('adminListModul', { modul: 'ukuran' }, { quiet: true }).then(function (r) { return r ? r.data.items : []; })).then(function (items) {
+      var ukr = (items || []).filter(function (u) { return u.aktif === 'true' || u.label === p.ukuran; });
       var m = U.openModal({ title: edit ? 'Ubah data ' + p.kode : 'Tambah peserta manual', cls: 'wide', html:
         '<form id="pf" novalidate><div class="form-grid">' +
         M.fieldHtml('f_nama', 'Nama lengkap santri', { value: p.nama, req: 1, cls: 'span2' }) +
@@ -301,13 +327,19 @@
         var call;
         if (edit) { d.id = p.id; d.tglLahir = v('f_tgl'); call = M.run('adminUbahPeserta', d, { ok: true }); }
         else { d.tgl_lahir = v('f_tgl'); d.statusInfaq = v('f_status'); d.kirimEmail = !!m.body.querySelector('#f_mail').checked; call = M.run('adminTambahPeserta', d, { ok: true, timeout: 90000 }); }
-        call.then(function (r) { M.spinBtn(btn, false); if (r) { m.close(); after(); } });
+        call.then(function (r) {
+          M.spinBtn(btn, false);
+          if (!r) return;
+          m.close();
+          if (edit) M.store.patch([p.id], { nama: d.nama, panggilan: d.panggilan, gender: d.gender, jenjang: d.jenjang, sekolah: d.sekolah, wali: d.wali, wa: d.wa, email: d.email, ukuran: d.ukuran, infaq: Number(d.infaq) || 0, medis: d.medis, metodeBayar: d.metodeBayar, catatanPanitia: d.catatanPanitia, tglLahir: d.tglLahir });
+          M.store.load(true).catch(function () { });   // selaraskan (usia, kode, dll.) diam-diam
+        });
       });
     });
   }
 
   // ---------- tempat sampah ----------
-  function trashModal(after) {
+  function trashModal() {
     var m = U.openModal({ title: 'Tempat Sampah', cls: 'wide', html: '<div id="tr">' + M.skeleton(2) + '</div>' });
     var box = m.body.querySelector('#tr');
     function load() {
@@ -323,9 +355,9 @@
     box.addEventListener('click', function (e) {
       var li = e.target.closest('li[data-id]'); if (!li) return;
       var id = li.getAttribute('data-id');
-      if (e.target.closest('[data-r]')) M.run('adminPulihkanPeserta', { ids: [id] }, { ok: true }).then(function () { load(); after(); });
+      if (e.target.closest('[data-r]')) M.run('adminPulihkanPeserta', { ids: [id] }, { ok: true }).then(function () { load(); M.store.load(true).catch(function () { }); });
       if (e.target.closest('[data-x]')) M.confirm('Hapus permanen?', 'Data dan bukti transfer akan hilang selamanya.', 'Hapus permanen', true).then(function (ok) {
-        if (ok) M.run('adminHapusPermanen', { ids: [id] }, { ok: true }).then(function () { load(); after(); });
+        if (ok) M.run('adminHapusPermanen', { ids: [id] }, { ok: true }).then(function () { load(); M.store.load(true).catch(function () { }); });
       });
     });
     load();

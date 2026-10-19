@@ -57,7 +57,7 @@
     U.setTheme(U.themeNow());
     app.querySelector('[data-theme-btn]').addEventListener('click', function () { U.setTheme(U.themeNow() === 'dark' ? 'light' : 'dark'); });
     app.querySelector('#out').addEventListener('click', function () {
-      M.call('adminLogout', {}).catch(function () { }).then(function () { M.clearSession(); showLogin(); });
+      M.call('adminLogout', {}).catch(function () { }).then(function () { clearInterval(warmT); M.clearSession(); showLogin(); });
     });
   }
 
@@ -81,8 +81,15 @@
   }
   window.addEventListener('hashchange', route);
 
+  var warmT = 0;
   function start() {
     shell(); route();
+    M.store.load().catch(function () { });      // muat semua data panitia sekali, sejak awal
+    // Jaga server tetap "hangat" (tanpa jeda start dingin) selama portal terbuka.
+    clearInterval(warmT);
+    warmT = setInterval(function () { if (!document.hidden && M.session().token) A.get('ping').catch(function () { }); }, 180000);
+    // Menu lain disiapkan sebelum diklik.
+    setTimeout(function () { M.swr('adminListModul', { modul: 'kegiatan' }, function () { }); M.swr('adminGetPengaturan', {}, function () { }); }, 2500);
   }
 
   // ---------- mulai ----------

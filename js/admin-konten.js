@@ -60,7 +60,7 @@
       var my = ++seq; tabs();
       el.querySelector('#mh').innerHTML = '<p class="muted">' + h(cur.hint || '') + '</p><button type="button" class="btn btn-primary btn-sm" id="mAdd">' + U.icon('plus') + ' Tambah</button>';
       el.querySelector('#ml').innerHTML = '<div class="pad">' + M.skeleton(3) + '</div>';
-      M.run('adminListModul', { modul: cur.key }, { quiet: true }).then(function (r) {
+      M.swr('adminListModul', { modul: cur.key }, function (r) {
         if (!alive || my !== seq) return;
         if (!r) { el.querySelector('#ml').innerHTML = M.empty('alert', 'Gagal memuat'); return; }
         items = r.data.items; draw();
@@ -160,6 +160,7 @@
   }
 
   M.pages.pengaturan = function (el, arg) {
+    var dirty = false;
     var cfg = null, fc = null, sec = SECTIONS.filter(function (s) { return s.id === arg; })[0] || SECTIONS[0], alive = true;
     el.innerHTML = '<div class="page-head"><div><h1>Pengaturan</h1><p class="muted">Atur acara, infaq, tampilan beranda, dan formulir.</p></div></div><section class="card list-card"><div class="toolbar"><div class="tabs scroll" id="stabs" role="tablist"></div></div><div class="pad" id="sbody">' + M.skeleton(3) + '</div></section>';
     function tabs() {
@@ -215,8 +216,9 @@
       var t = e.target.closest('[data-s]'); if (t) { location.hash = '#/pengaturan/' + t.getAttribute('data-s'); return; }
       if (e.target.closest('#sSave') && sec.custom === 'form') save();
     });
-    M.run('adminGetPengaturan', {}, { quiet: true }).then(function (r) {
-      if (!alive) return;
+    el.addEventListener('input', function () { dirty = true; });
+    M.swr('adminGetPengaturan', {}, function (r) {
+      if (!alive || (dirty && r)) return;
       if (!r) { el.querySelector('#sbody').innerHTML = M.empty('alert', 'Gagal memuat pengaturan'); return; }
       cfg = r.data.pengaturan; fc = r.data.fieldConfig; draw();
     });
@@ -236,7 +238,7 @@
       '<section class="card pad"><div class="sec-h"><div><span class="eyebrow">Jejak audit</span><h2>Log Aktivitas</h2></div><button type="button" class="btn btn-soft btn-sm" id="lRef">' + U.icon('refresh') + ' Muat ulang</button></div><div id="llist">' + M.skeleton(1) + '</div></section>';
 
     function loadAdm() {
-      M.run('adminListAdmin', {}, { quiet: true }).then(function (r) {
+      M.swr('adminListAdmin', {}, function (r) {
         if (!alive) return; var b = el.querySelector('#alist');
         if (!r) { b.innerHTML = M.empty('alert', 'Gagal memuat'); return; }
         b.innerHTML = '<ul class="trash-list">' + r.data.items.map(function (a) {
@@ -247,7 +249,7 @@
       });
     }
     function loadLog() {
-      M.run('adminLog', { limit: 100 }, { quiet: true }).then(function (r) {
+      M.swr('adminLog', { limit: 100 }, function (r) {
         if (!alive) return; var b = el.querySelector('#llist');
         if (!r || !r.data.items.length) { b.innerHTML = M.empty('history', 'Belum ada aktivitas'); return; }
         b.innerHTML = '<div class="logs">' + r.data.items.map(function (l) { return '<div class="logrow"><time>' + h(M.fmtTime(l.waktu)) + '</time><b>' + h(l.admin) + '</b><span class="code">' + h(l.aksi) + '</span><small>' + h(l.detail) + '</small></div>'; }).join('') + '</div>';

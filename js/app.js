@@ -15,7 +15,7 @@
     var nav = document.getElementById('nav');
     nav.innerHTML =
       '<nav class="nav" aria-label="Utama"><a class="brand" href="#/" aria-label="Beranda PASA 17"><span class="brand-mark" id="brandMark">' + U.icon('tent') + '</span>' +
-      '<span class="brand-txt"><b id="brandName">PASA 17</b><span id="brandSub">Pine Forest Lembang</span></span></a>' +
+      '<span class="brand-txt"><b id="brandName">PASA 17</b><span id="brandSub"></span></span></a>' +
       '<div class="nav-links">' + LINKS.map(function (l) { return '<a href="' + l[0] + '" data-key="' + l[2] + '">' + l[1] + '</a>'; }).join('') + '</div>' +
       '<div class="nav-actions"><button type="button" class="icon-btn" data-theme-btn></button><a class="nav-admin" href="admin.html">Portal Admin</a>' +
       '<a class="btn btn-primary" href="#/daftar">Daftar<span class="nav-cta-long">&nbsp;Sekarang</span></a>' +
@@ -39,8 +39,22 @@
       if (a.getAttribute('data-key') === cur.key) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
   }
+  // Judul tab & deskripsi mengikuti Pengaturan (nama acara, lokasi, tanggal) — tidak ada teks lokasi yang tertanam.
+  function pageTitle(page) {
+    var d = pub(), p = d && d.pengaturan;
+    if (page.isHome) return p ? (p.nama_acara || 'PASA') + (p.lokasi ? ' | ' + p.lokasi : '') : 'Pendaftaran PASA';
+    return page.title;
+  }
+  function updateMeta(p) {
+    var desc = 'Pendaftaran online ' + (p.nama_acara || 'PASA') + (p.lokasi ? ' di ' + p.lokasi : '') + (p.tanggal_mulai ? ', ' + U.fmtRange(p.tanggal_mulai, p.tanggal_selesai) : '') + '. Daftar lewat HP, unggah bukti infaq, dan terima e-tiket QR.';
+    var m = document.querySelector('meta[name="description"]'); if (m) m.setAttribute('content', desc);
+    var og = document.querySelector('meta[property="og:description"]'); if (og) og.setAttribute('content', desc);
+    var ot = document.querySelector('meta[property="og:title"]'); if (ot) ot.setAttribute('content', p.nama_acara || 'PASA');
+  }
   function updateBrand(d) {
     if (!d) return; var p = d.pengaturan;
+    updateMeta(p);
+    if (cur && cur.page) document.title = pageTitle(cur.page);
     var n = document.getElementById('brandName'), s = document.getElementById('brandSub'), m = document.getElementById('brandMark');
     if (n) n.textContent = p.nama_singkat || 'PASA 17';
     if (s) s.textContent = String(p.lokasi || '').split(/[&,]/)[0].trim();
@@ -52,7 +66,7 @@
     var f = document.getElementById('footer'), p = d ? d.pengaturan : {}, med = d ? d.medsos || [] : [];
     var wa = S.waLink(p.kontak_wa);
     f.innerHTML = '<div class="wrap"><div class="f-cols">' +
-      '<div><div class="brand-line"><span class="brand-mark" style="width:32px;height:32px">' + U.icon('tent') + '</span>' + esc((p.nama_singkat || 'PASA 17') + ' ' + String(p.lokasi || 'Lembang').split(/[&,]/).pop().trim()) + '</div>' +
+      '<div><div class="brand-line"><span class="brand-mark" style="width:32px;height:32px">' + U.icon('tent') + '</span>' + esc((p.nama_singkat || 'PASA 17') + ' ' + String(p.lokasi || '').split(/[&,]/).pop().trim()) + '</div>' +
       '<p>' + esc(p.footer_teks || 'Pesantren Anak Shaleh ke-17. Membina generasi berakhlak mulia melalui tadabbur alam dan ukhuwah islamiyah.') + '</p>' +
       (p.alamat || p.lokasi ? '<ul class="contact-list" style="margin-top:14px"><li>' + U.icon('pin') + '<span>' + (U.safeUrl(p.peta_url) ? '<a href="' + esc(U.safeUrl(p.peta_url)) + '" target="_blank" rel="noopener">' + esc(p.alamat || p.lokasi) + '</a>' : esc(p.alamat || p.lokasi)) + '</span></li></ul>' : '') +
       (med.length ? '<div class="social">' + med.map(function (m) { return '<a href="' + esc(U.safeUrl(m.url)) + '" target="_blank" rel="noopener">' + esc(m.platform) + '</a>'; }).join('') + '</div>' : '') + '</div>' +
@@ -83,7 +97,7 @@
     if (cur.page && cur.page.unmount && cur.mounted) { try { cur.page.unmount(); } catch (e) { console.error(e); } }
     cur = { key: key || '404', page: page || null, mounted: false };
     closeSheet(); markActive(); window.scrollTo(0, 0);
-    document.title = page ? page.title : 'Halaman tidak ditemukan — PASA 17';
+    document.title = page ? pageTitle(page) : 'Halaman tidak ditemukan — PASA 17';
     if (!page) {
       main.innerHTML = '<div class="wrap"><div class="card err-state"><h2>Halaman tidak ditemukan</h2><a class="btn btn-primary" href="#/">Kembali ke Beranda</a></div></div>'; return;
     }
