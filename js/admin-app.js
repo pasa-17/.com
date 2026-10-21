@@ -4,8 +4,8 @@
   var P = window.PASA, U = P.ui, A = P.api, M = P.adm, h = M.h;
   var app = document.getElementById('app');
   var NAV = [['#/', 'Ringkasan Kuota', 'dashboard', 'dashboard'], ['#/bayar', 'Verifikasi Bayar', 'verify', 'bayar'], ['#/peserta', 'Data Peserta', 'list', 'peserta'],
-    ['#/scan', 'Scan QR / Masuk', 'qr', 'scan'], ['#/konten', 'Konten Situs', 'layers', 'konten'], ['#/pengaturan', 'Pengaturan', 'settings', 'pengaturan'], ['#/akun', 'Akun & Sistem', 'users', 'akun']];
-  var ROUTES = { '': 'dashboard', '/': 'dashboard', '/bayar': 'bayar', '/peserta': 'peserta', '/scan': 'scan', '/konten': 'konten', '/pengaturan': 'pengaturan', '/akun': 'akun' };
+    ['#/scan', 'Scan QR / Masuk', 'qr', 'scan'], ['#/wa', 'WhatsApp & Notifikasi', 'chat', 'wa'], ['#/crm', 'CRM Kontak', 'contacts', 'crm'], ['#/konten', 'Konten Situs', 'layers', 'konten'], ['#/pengaturan', 'Pengaturan', 'settings', 'pengaturan'], ['#/akun', 'Akun & Sistem', 'users', 'akun']];
+  var ROUTES = { '': 'dashboard', '/': 'dashboard', '/bayar': 'bayar', '/peserta': 'peserta', '/scan': 'scan', '/wa': 'wa', '/crm': 'crm', '/konten': 'konten', '/pengaturan': 'pengaturan', '/akun': 'akun' };
   var cleanup = null, mainEl = null;
 
   U.installSprite();

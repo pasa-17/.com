@@ -155,7 +155,7 @@
     var id = 's_' + def[0], type = def[2], help = typeof def[3] === 'string' ? def[3] : '';
     if (type === 'photo') return photoField(id, v, def[1]);
     if (type === 'select') return '<div class="field"><label class="lbl" for="' + id + '">' + h(def[1]) + '</label><select class="select" id="' + id + '">' + def[3].map(function (o) { return '<option value="' + h(o[0]) + '"' + (String(v) === o[0] ? ' selected' : '') + '>' + h(o[1]) + '</option>'; }).join('') + '</select></div>';
-    if (type === 'textarea') return M.fieldHtml(id, def[1], { type: 'textarea', rows: 4, value: v, help: h(help), cls: 'span2' });
+    if (type === 'textarea') return M.fieldHtml(id, def[1], { type: 'textarea', rows: /^wa_pesan/.test(def[0]) ? 8 : 4, value: v, help: h(help), cls: 'span2' });
     return M.fieldHtml(id, def[1], { type: type, value: v, help: h(help) });
   }
 
