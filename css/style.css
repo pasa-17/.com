@@ -614,3 +614,225 @@ main { display: block; min-height: 60vh; outline: 0; }
   .pass { box-shadow: none; border: 1px solid #999; }
   .pass-tear::before, .pass-tear::after { background: #fff; }
 }
+
+/* ==========================================================================
+   MODE COMPACT HP (≤ 768px) — hanya ukuran & tata letak; desktop tidak berubah.
+   ========================================================================== */
+@media (max-width: 768px) {
+  :root { --gut: 12px; --r-sm: 10px; --r-md: 12px; --r-lg: 16px; --r-xl: 20px; }
+  body { font-size: 14px; line-height: 1.5; }
+  .i { width: 1.15em; height: 1.15em; }
+
+  /* Navigasi */
+  .nav-wrap { padding: 6px var(--gut) 0; }
+  .nav { gap: 8px; padding: 4px 4px 4px 12px; }
+  .brand { gap: 8px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .brand-mark .i { width: 17px; height: 17px; }
+  .brand-txt b { font-size: 15px; }
+  .brand-txt span { font-size: 10.5px; }
+  .nav-actions { gap: 2px; }
+  .icon-btn { width: 36px; height: 36px; }
+  .nav .btn { min-height: 34px; padding: 0 14px; font-size: 13px; }
+  .sheet { margin-top: 6px; padding: 8px; border-radius: var(--r-md); gap: 2px; }
+  .sheet a { padding: 10px 12px; font-size: 14px; border-radius: var(--r-sm); }
+
+  /* Tombol & lencana */
+  .btn { min-height: 40px; padding: 0 18px; font-size: 14px; gap: 6px; border-width: 1.5px; }
+  .btn-lg { min-height: 44px; }
+  .btn-sm { min-height: 32px; padding: 0 12px; font-size: 12.5px; }
+  .badge { padding: 4px 9px; font-size: 11px; gap: 5px; }
+  .badge .i { width: 12px; height: 12px; }
+  .eyebrow { font-size: 11px; line-height: 14px; }
+
+  /* Form */
+  .field { gap: 5px; }
+  .lbl { font-size: 13px; line-height: 18px; }
+  .input, .select, .textarea { height: 42px; padding: 0 16px; font-size: 14px; }
+  .textarea { min-height: 84px; padding: 10px 16px; border-radius: var(--r-md); }
+  .input-affix .pre { left: 15px; font-size: 14px; }
+  .input-affix .input { padding-left: 44px; }
+  .help, .err-msg { font-size: 12px; line-height: 16px; }
+  .row { gap: 12px; }
+  .chips { gap: 8px; }
+  .chip > span { min-height: 40px; padding: 0 16px; font-size: 14px; gap: 6px; }
+  .tile-grid { gap: 8px; }
+  .tile > span { padding: 10px 6px; min-height: 66px; border-radius: var(--r-md); }
+  .tile b { font-size: 19px; }
+  .tile small { font-size: 11.5px; }
+  .check { gap: 10px; }
+  .check input { width: 20px; height: 20px; border-radius: 6px; }
+  .check input:checked::after { width: 5px; height: 9px; }
+  .alert { padding: 10px 12px; gap: 10px; font-size: 13px; line-height: 18px; border-radius: var(--r-sm); }
+
+  /* Bagian umum */
+  .sec { padding-top: 36px; }
+  .sec-head { gap: 6px; margin-bottom: 16px; }
+  .sec-head h2 { font-size: clamp(21px, 6vw, 26px); }
+  .sec-head p { font-size: 14px; }
+
+  /* Beranda */
+  .hero { margin-top: 10px; }
+  .hero-copy { padding: 18px 16px 20px; gap: 12px; }
+  .hero-badges { gap: 6px; }
+  .hero h1 { font-size: clamp(26px, 8vw, 32px); }
+  .hero p.lead { font-size: 14.5px; line-height: 1.55; }
+  .hero-meta { gap: 6px; }
+  .hero-meta .badge { padding: 6px 11px; font-size: 12px; }
+  .hero-cta { gap: 8px; margin-top: 0; }
+  .hero-art { min-height: 170px; }
+  .hero-chip { left: 10px; right: 10px; bottom: 10px; padding: 8px 10px; gap: 10px; font-size: 12px; }
+  .hero-chip b { font-size: 13px; }
+  .hero-chip .ic { width: 32px; height: 32px; border-radius: 10px; }
+  .stats { margin-top: 10px; }
+  .stat { padding: 12px 14px 11px; }
+  .stat b { font-size: 22px; }
+  .stat span { font-size: 12px; margin-top: 2px; }
+  .k-grid { gap: 10px; }
+  .k-card { padding: 16px; gap: 8px; }
+  .k-ic { width: 38px; height: 38px; border-radius: 12px; }
+  .k-card h3 { font-size: 18px; }
+  .k-card p { font-size: 13.5px; }
+  .k-tags { gap: 6px; padding-top: 2px; }
+  .k-tags span { font-size: 11.5px; padding: 4px 10px; }
+  .f-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .f-card { padding: 10px; gap: 6px; }
+  .f-card h3 { font-size: 14px; }
+  .f-card p { font-size: 12.5px; line-height: 1.4; }
+  .size-card { margin-top: 10px; padding: 14px; gap: 10px; }
+  .size-card h3 { font-size: 16px; }
+  .size-table { font-size: 13px; }
+  .size-table th, .size-table td { padding: 7px 8px; }
+  .marquee + .marquee { margin-top: 10px; }
+  .track { gap: 10px; }
+  .photo { width: 180px; height: 130px; border-radius: var(--r-md); }
+  .photo .cap { font-size: 11px; padding: 16px 10px 7px; }
+  .tcard { width: 250px; padding: 14px; gap: 8px; }
+  .tcard p { font-size: 13px; }
+  .tcard .who { gap: 8px; }
+  .avatar { width: 32px; height: 32px; font-size: 12px; }
+  .tcard .who b { font-size: 13px; } .tcard .who small { font-size: 11.5px; }
+  .video { padding: 16px; gap: 14px; }
+  .video h2 { font-size: clamp(21px, 6vw, 26px); }
+  .video .v-copy { gap: 10px; }
+  .play { width: 52px; height: 52px; } .play .i { width: 22px; height: 22px; }
+  .v-list { gap: 6px; } .v-list button { padding: 6px 12px; font-size: 12px; }
+  .s4 { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .s4 .card { padding: 14px; gap: 6px; }
+  .num { width: 32px; height: 32px; font-size: 14px; }
+  .s4 h3 { font-size: 15px; } .s4 p { font-size: 12.5px; line-height: 1.4; } .s4 .tag { font-size: 11.5px; }
+  .infaq { padding: 18px 16px; gap: 14px; }
+  .infaq h2 { font-size: clamp(21px, 6vw, 26px); }
+  .infaq .min { margin-top: 4px; }
+  .infaq .min b { font-size: 26px; } .infaq .min small { font-size: 11px; }
+  .rek { padding: 14px; gap: 10px; }
+  .rek-head { font-size: 12px; } .rek-bank, .rek-an { font-size: 13px; }
+  .rek-no { padding: 9px 12px; gap: 8px; }
+  .rek-no code { font-size: 18px; }
+  .rek img.qris { width: 150px; }
+  .cta { padding: 18px 16px; gap: 12px; }
+  .cta h2 { font-size: clamp(20px, 5.6vw, 24px); }
+  .cta p { margin-top: 4px; }
+  .cta .acts { gap: 8px; }
+
+  /* Footer */
+  .footer { margin-top: 44px; padding: 26px 0 18px; }
+  .f-cols { gap: 18px; }
+  .footer h3 { font-size: 15px; margin-bottom: 6px; }
+  .footer p, .footer li { font-size: 13.5px; }
+  .footer .brand-line { font-size: 17px; margin-bottom: 6px; }
+  .contact-list { gap: 7px; }
+  .social { gap: 6px; margin-top: 8px; }
+  .social a { padding: 6px 12px; font-size: 12px; }
+  .f-bottom { margin-top: 20px; padding-top: 14px; gap: 8px 16px; font-size: 12px; }
+  .f-bottom a, .f-bottom button { font-size: 12px; }
+
+  /* Pendaftaran */
+  .reg-banner { margin-top: 10px; padding: 16px; gap: 10px; }
+  .reg-banner .top { gap: 12px; }
+  .reg-ic { width: 40px; height: 40px; } .reg-ic .i { width: 20px; height: 20px; }
+  .reg-banner h1 { font-size: clamp(21px, 6.2vw, 26px); margin-top: 4px; }
+  .reg-banner p { font-size: 13.5px; margin-top: 4px; }
+  .stepper { margin-top: 12px; padding: 10px 6px 8px; }
+  .stepper li, .stepper button { gap: 5px; }
+  .stepper li::before { top: 16px; height: 2px; }
+  .stepper .dotc { width: 32px; height: 32px; }
+  .stepper li.cur .dotc { box-shadow: 0 0 0 3px var(--brand-soft); }
+  .reg-grid { gap: 14px; margin-top: 14px; }
+  .form-card { padding: 16px 14px 18px; }
+  .form-card .step-no { font-size: 11px; }
+  .form-card h2 { font-size: clamp(19px, 5.4vw, 23px); margin-top: 4px; }
+  .form-card .step-desc { font-size: 13.5px; margin-top: 4px; }
+  .form-body { gap: 14px; margin-top: 14px; }
+  .form-nav { gap: 8px; margin-top: 18px; }
+  .age-pill { font-size: 12px; }
+  .reg-aside { gap: 10px; }
+  .sum-card { padding: 14px; gap: 10px; }
+  .sum-head h3 { font-size: 16px; }
+  .mini-ticket { padding: 12px; gap: 8px; }
+  .mini-ticket .nm { font-size: 17px; } .mini-ticket .sub { font-size: 13px; }
+  .mini-ticket .mt-grid b { font-size: 13px; }
+  .rows { gap: 6px; font-size: 13.5px; }
+  .rows .tot { padding-top: 8px; font-size: 16px; } .rows .tot b { font-size: 19px; }
+  .checks { font-size: 12.5px; gap: 6px; }
+  .help-card { padding: 10px 12px; gap: 10px; }
+  .help-card .ic { width: 34px; height: 34px; }
+  .help-card b { font-size: 13px; } .help-card small { font-size: 12px; }
+  .help-card .btn { min-height: 34px; padding: 0 12px; }
+  .loc-card { padding: 10px; gap: 10px; }
+  .loc-card .thumb { width: 60px; height: 60px; }
+  .loc-card b { font-size: 16px; } .loc-card small { font-size: 12px; }
+  .rek-box { padding: 12px; gap: 8px; }
+  .drop { padding: 12px; gap: 12px; }
+  .drop .ic { width: 42px; height: 42px; border-radius: 12px; }
+  .drop b { font-size: 14px; } .drop small { font-size: 12px; }
+  .busy { padding: 16px; } .busy .box { padding: 22px 20px; gap: 8px; }
+  .busy b { font-size: 16px; } .busy p { font-size: 13px; }
+  .spin { width: 36px; height: 36px; border-width: 3px; }
+  .review { padding: 12px; gap: 7px; font-size: 13.5px; }
+  .blocked { margin-top: 14px; padding: 26px 16px; gap: 10px; }
+  .blocked .ic { width: 52px; height: 52px; }
+  .blocked h2 { font-size: 21px; }
+  .blocked .acts { gap: 8px; margin-top: 4px; }
+
+  /* E-Tiket & Cek */
+  .page-head { margin-top: 16px; gap: 6px; }
+  .page-head h1 { font-size: clamp(22px, 6.4vw, 28px); }
+  .tiket-grid { gap: 14px; margin-top: 14px; }
+  .pass-top { padding: 16px 16px 14px; gap: 4px; }
+  .pass-top .pt-brand { font-size: 17px; }
+  .pass-top .pt-name { font-size: 12.5px; }
+  .pass-tear::before, .pass-tear::after { top: -12px; width: 22px; height: 22px; }
+  .pass-tear::before { left: -29px; } .pass-tear::after { right: -29px; }
+  .pass-body { padding: 16px 16px 18px; gap: 10px; }
+  .qr-box { width: min(200px, 100%); padding: 8px; }
+  .pass .kode { font-size: 24px; }
+  .pass .nm { font-size: 17px; } .pass .sub { font-size: 13px; }
+  .pass-grid { gap: 8px 12px; padding-top: 12px; }
+  .pass-grid b { font-size: 13.5px; }
+  .pass-actions { gap: 8px; }
+  .side-stack { gap: 10px; }
+  .info-card { padding: 14px; gap: 8px; }
+  .info-card h2 { font-size: 16px; }
+  .info-card p, .info-card li { font-size: 13.5px; }
+  .info-card ul { gap: 5px; padding-left: 18px; }
+  .link-box { padding: 6px 6px 6px 12px; }
+  .link-box span { font-size: 12.5px; }
+  .cek-card { margin-top: 14px; padding: 18px 16px; gap: 14px; }
+
+  /* Modal, toast */
+  .modal-bg { padding: 10px; }
+  .modal { max-height: calc(100vh - 20px); max-height: calc(100dvh - 20px); }
+  .modal-head { padding: 12px 6px 6px 16px; }
+  .modal-head h2 { font-size: 17px; }
+  .modal-body { padding: 2px 16px 16px; font-size: 14px; }
+  .toast { padding: 9px 14px; font-size: 13px; }
+  #toast { bottom: 12px; }
+  #toTop { width: 40px; height: 40px; right: 12px; bottom: 12px; }
+  .load-hero { height: 280px; margin-top: 10px; }
+  .err-state { margin-top: 14px; padding: 26px 16px; }
+}
+/* iOS memperbesar layar otomatis bila font input < 16px; cegah itu tanpa mengubah ukuran di Android */
+@supports (-webkit-touch-callout: none) {
+  @media (max-width: 768px) { .input, .select, .textarea, .search input { font-size: 16px; } }
+}

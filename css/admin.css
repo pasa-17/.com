@@ -315,3 +315,164 @@ a.stat:hover { box-shadow: var(--sh3); }
 .adm-in { grid-template-columns: minmax(0, 1fr); }
 #wbody { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); min-width: 0; }
 .wa-grid > *, .cfg-grid > * { min-width: 0; }
+
+/* ==========================================================================
+   MODE COMPACT HP — Portal Admin (≤ 768px). Desktop tidak berubah.
+   ========================================================================== */
+@media (max-width: 768px) {
+  h3 { font-size: 15px; margin-bottom: 8px; }
+  hr { margin: 14px 0; }
+  .select.sm { height: 36px; padding: 0 30px 0 14px; font-size: 13px; background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%; }
+  .select { padding-right: 38px; background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%; }
+  .icon-btn.sm { width: 32px; height: 32px; }
+  .spin { width: 28px; height: 28px; border-width: 3px; }
+
+  /* Masuk */
+  .login-wrap { padding: 16px 12px; }
+  .login { padding: 22px 18px; gap: 10px; }
+  .login h1 { font-size: 19px; }
+  .login form { gap: 12px; }
+  .brand-mark.big { width: 44px; height: 44px; }
+  .brand-mark.big .i { width: 22px; height: 22px; }
+  .pw .input { padding-right: 46px; }
+  .pw .icon-btn { right: 3px; top: 3px; width: 36px; height: 36px; }
+  .login .back { font-size: 13px; }
+
+  /* Kerangka: header & menu geser */
+  .adm-top { height: 44px; padding: 0 var(--gut); gap: 8px; }
+  .adm-side { top: 44px; padding: 5px 10px 0; }
+  .adm-nav { gap: 5px; padding: 2px 0 7px; }
+  .adm-nav a { padding: 6px 12px; font-size: 12.5px; gap: 6px; }
+  .top-t { font-size: 13px; }
+  .top-l, .top-r { gap: 6px; }
+  .adm-page { padding: 12px var(--gut) 36px; gap: 12px; }
+  #dBody, .adm-in, #wbody { gap: 12px; }
+
+  /* Umum */
+  .page-head { gap: 10px; align-items: center; }
+  .page-head h1 { font-size: clamp(21px, 6vw, 25px); }
+  .page-head p { font-size: 13px; }
+  .head-acts { gap: 6px; }
+  .pad { padding: 14px; }
+  .card.pad h2, .sec-h h2 { font-size: 16.5px; }
+  .sec-h { margin-bottom: 10px; gap: 8px; }
+  .card.dark p { margin: 6px 0 12px; font-size: 13px; }
+  .two-col { gap: 12px; }
+  .empty { padding: 24px 12px; gap: 4px; }
+  .empty .i { width: 26px; height: 26px; }
+  .acts { gap: 8px; margin-top: 14px; }
+  .modal .acts .btn { min-height: 38px; }
+  .inline { gap: 8px; }
+  .form-grid { gap: 12px; }
+  .modal-body .field + .field { margin-top: 10px; }
+  .modal-body form > .field { margin-bottom: 10px; }
+  .check input { width: 18px; height: 18px; }
+  .mt { margin-top: 12px; }
+
+  /* Statistik */
+  .stats { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat { padding: 12px; gap: 4px; }
+  .stat small { padding-right: 34px; font-size: 10px; letter-spacing: .08em; }
+  .stat b { margin-top: 2px; font-size: 21px; }
+  .stat b em { font-size: 13px; }
+  .stat p, .stat p b { font-size: 12px; }
+  .stat .go { font-size: 12px; }
+  .stat-ic { right: 10px; top: 10px; width: 28px; height: 28px; border-radius: 9px; }
+  .stat-ic .i { width: 15px; height: 15px; }
+  .meter { height: 6px; }
+  .reg-toggle { padding: 4px 12px; gap: 8px; font-size: 12px; }
+  .reg-toggle b { font-size: 11px; min-width: 66px; }
+  .switch { width: 42px; height: 24px; }
+  .switch i { width: 18px; height: 18px; }
+  .switch.on i { transform: translateX(18px); }
+  .size-row { grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+  .size-pill { padding: 9px 8px; border-radius: var(--r-md); }
+  .size-pill b { font-size: 12.5px; } .size-pill span { font-size: 24px; } .size-pill small { font-size: 11px; }
+  .bars { height: 130px; gap: 4px; }
+  .bar small { font-size: 9px; }
+
+  /* Daftar peserta / verifikasi */
+  .toolbar { padding: 12px 12px 0; gap: 8px; }
+  .tabs { gap: 4px; }
+  .tab { padding: 6px 12px; font-size: 12.5px; gap: 6px; }
+  .tab span { font-size: 11px; padding: 0 7px; }
+  .tabs.scroll { gap: 2px; }
+  .tabs.scroll .tab { padding: 6px 9px; }
+  .tb-right { gap: 8px; min-width: 0; flex-basis: 100%; justify-content: stretch; }
+  .search { min-width: 150px; max-width: none; }
+  .search input { height: 38px; font-size: 13px; padding: 0 14px 0 38px; }
+  .search .i { left: 13px; width: 16px; height: 16px; }
+  .bulk { margin: 10px 12px 0; padding: 8px 10px; gap: 6px; }
+  .rows { padding-top: 8px; }
+  .prow { padding: 10px 12px; gap: 4px 10px; grid-template-columns: 22px minmax(0, 1fr) auto; }
+  .pk input { width: 18px; height: 18px; }
+  .av { width: 32px; height: 32px; font-size: 11.5px; }
+  .c-name { gap: 8px; }
+  .c-name b, .c-wali b, .c-amt b { font-size: 13px; line-height: 1.25; }
+  .c-name small, .c-amt small, .c-stat small { font-size: 11.5px; line-height: 1.3; }
+  .c-wali a { font-size: 12.5px; }
+  .code { font-size: 11px; padding: 2px 7px; border-radius: 7px; }
+  .c-act { gap: 4px; }
+  .c-act .btn { min-height: 30px; padding: 0 12px; font-size: 12.5px; }
+  .size-tag { min-width: 26px; height: 26px; font-size: 12px; border-radius: 8px; }
+  .pager { padding: 10px 12px; gap: 8px; font-size: 12px; }
+  .pager > div { gap: 6px; }
+  .pg { font-size: 12px; }
+  .trash-list { gap: 6px; }
+  .trash-list li { padding: 9px 12px; gap: 8px; }
+
+  /* Bukti transfer */
+  .proof { gap: 10px; }
+  .proof-view { min-height: 150px; padding: 8px; }
+  .proof-view img, .proof-view iframe { max-height: 50vh; height: 50vh; }
+  .proof-view img { height: auto; }
+
+  /* Konten */
+  .mod-head { padding: 10px 12px; gap: 8px; }
+  .mod-head p { font-size: 13px; min-width: 0; }
+  .mlist li { padding: 8px 12px; gap: 8px; }
+  .mlist .th { width: 52px; height: 40px; border-radius: 8px; }
+  .mi { min-width: 0; }
+  .mi b { font-size: 13px; } .mi small { font-size: 11.5px; }
+  .tgl { font-size: 11.5px; margin-right: 4px; }
+  .pf-prev { width: 88px; height: 64px; }
+  .fc-list { gap: 8px; margin: 10px 0; }
+  .fc-row { padding: 8px; gap: 8px; }
+  .fc-row .input { height: 38px; }
+  .logs { gap: 4px; max-height: 360px; }
+  .logrow { padding: 8px 10px; grid-template-columns: 70px 1fr; font-size: 12px; }
+
+  /* Scanner */
+  .scan-grid { gap: 12px; }
+  .scan-grid .card.pad { gap: 10px; }
+  .cam { border-radius: var(--r-md); }
+  .cam-ph .i { width: 32px; height: 32px; }
+  .reticle { border-width: 2px; border-radius: 18px; }
+  .result { padding: 18px 12px; min-height: 170px; gap: 6px; }
+  .result .i { width: 44px; height: 44px; }
+  .result b { font-size: 18px; } .result p { font-size: 13px; }
+  .result.idle b { font-size: 15px; }
+
+  /* WhatsApp & CRM */
+  .wa-grid, .cfg-grid { gap: 12px; }
+  .wa-grid .card.pad, .cfg-grid .card.pad { gap: 10px; }
+  .cfg-h { gap: 8px; } .cfg-h h2 { font-size: 16.5px; }
+  .varbar { gap: 5px; }
+  .wa-sum { gap: 6px; }
+  .chipn { padding: 3px 10px; font-size: 12px; }
+  .wa-badge { padding: 1px 8px; font-size: 11px; }
+  .wa-preview { padding: 10px; gap: 4px; border-radius: var(--r-md); }
+  .wa-preview .bub { padding: 8px 12px; font-size: 13px; }
+  .wa-preview small { font-size: 11.5px; }
+  .seg-batch button { padding: 7px 16px; font-size: 13.5px; }
+  .wa-count { font-size: 13px; }
+  .tbl { font-size: 12.5px; }
+  .tbl th { padding: 8px 9px; font-size: 10.5px; }
+  .tbl td { padding: 8px 9px; }
+  .tbl td small { font-size: 11.5px; }
+  .tbl input[type="checkbox"] { width: 16px; height: 16px; }
+  .tagc { font-size: 11px; padding: 0 8px; }
+  .tl { gap: 6px; max-height: 240px; }
+  .tl li { grid-template-columns: 66px 1fr; gap: 8px; padding: 8px 10px; font-size: 12.5px; }
+  .dgrp { padding: 10px; gap: 6px; margin-top: 8px; }
+}
