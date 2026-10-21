@@ -54,7 +54,8 @@
         return '<article class="card k-card' + (dark ? ' dark' : '') + '">' +
           (hasPhoto ? U.img(k.foto_url, k.judul, 'k-media', dark ? 'night' : 'day') : '<span class="k-ic">' + U.icon(K_ICONS[i % 4] || 'leaf') + '</span>') +
           (k.label ? '<div class="eyebrow">' + U.esc(k.label) + '</div>' : '') +
-          '<h3>' + U.esc(k.judul) + '</h3><p>' + U.esc(k.deskripsi) + '</p>' +
+          '<h3>' + U.esc(k.judul) + '</h3><p class="k-desc">' + U.esc(k.deskripsi) + '</p>' +
+          '<button type="button" class="k-more" aria-expanded="false" hidden>Selengkapnya</button>' +
           ((k.info_kiri || k.info_kanan) ? '<div class="k-tags">' + (k.info_kiri ? '<span>' + U.esc(k.info_kiri) + '</span>' : '') + (k.info_kanan ? '<span>' + U.esc(k.info_kanan) + '</span>' : '') + '</div>' : '') +
           '</article>';
       }).join('') + '</div></section>';
@@ -230,7 +231,21 @@
     cleanups.forEach(function (f) { f(); }); cleanups = [];
     el.querySelectorAll('.marquee').forEach(setupMarquee);
     setupVideo(el, pub);
-    el.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('[data-lb]'); if (b) openLightbox(parseInt(b.getAttribute('data-lb'), 10)); });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-lb]'); if (b) { openLightbox(parseInt(b.getAttribute('data-lb'), 10)); return; }
+      var m = e.target.closest && e.target.closest('.k-more');
+      if (m) { var c = m.closest('.k-card'), on = !c.classList.contains('open'); c.classList.toggle('open', on); m.setAttribute('aria-expanded', on ? 'true' : 'false'); m.textContent = on ? 'Ringkas' : 'Selengkapnya'; }
+    });
+    // Tombol "Selengkapnya" hanya muncul bila deskripsi terpotong (HP); dihitung ulang saat layar/font berubah.
+    function fitMore() {
+      el.querySelectorAll('.k-card').forEach(function (c) {
+        var p = c.querySelector('.k-desc'), m = c.querySelector('.k-more'); if (!p || !m || c.classList.contains('open')) return;
+        m.hidden = !(p.scrollHeight > p.clientHeight + 1);
+      });
+    }
+    requestAnimationFrame(fitMore);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitMore);
+    window.addEventListener('resize', fitMore); cleanups.push(function () { window.removeEventListener('resize', fitMore); });
     lastSig = sig(pub);
   }
 
