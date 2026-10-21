@@ -36,11 +36,11 @@
       '<div class="hero-art">' + U.img(p.hero_foto, 'Suasana perkemahan ' + (p.nama_singkat || 'PASA'), '', 'night') +
         '<div class="hero-chip"><span class="ic">' + U.icon('moon') + '</span><span><b>Sholat Berjamaah &amp; Mabit</b>Di bawah naungan alam terbuka</span></div>' +
       '</div></section>' +
-      '<div class="stats" role="list">' +
-        '<div class="stat" role="listitem"><b>16 Edisi</b><span>Kiprah sejak 2008 membina santri</span></div>' +
-        '<div class="stat" role="listitem"><b>1 : 6</b><span>Rasio murabbi pendamping santri</span></div>' +
-        '<div class="stat" role="listitem"><b>100%</b><span>Makanan halal, sehat &amp; bergizi</span></div>' +
-        '<div class="stat" role="listitem"><b>24 Jam</b><span>Tim medis &amp; paramedis lapangan</span></div>' +
+      '<div class="stats hero-stats" role="list">' +
+        '<div class="stat" role="listitem"><b>16 Edisi</b><span><em class="s-full">Kiprah sejak 2008 membina santri</em><em class="s-short">Kiprah sejak 2008</em></span></div>' +
+        '<div class="stat" role="listitem"><b>1 : 6</b><span><em class="s-full">Rasio murabbi pendamping santri</em><em class="s-short">Rasio murabbi–santri</em></span></div>' +
+        '<div class="stat" role="listitem"><b>100%</b><span><em class="s-full">Makanan halal, sehat &amp; bergizi</em><em class="s-short">Halal, sehat &amp; bergizi</em></span></div>' +
+        '<div class="stat" role="listitem"><b>24 Jam</b><span><em class="s-full">Tim medis &amp; paramedis lapangan</em><em class="s-short">Medis &amp; paramedis</em></span></div>' +
       '</div>';
   }
 

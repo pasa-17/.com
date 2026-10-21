@@ -844,3 +844,22 @@ main { display: block; min-height: 60vh; outline: 0; }
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 768px) { .input, .select, .textarea, .search input { font-size: 16px; } }
 }
+
+/* ==========================================================================
+   Statistik di bawah gambar utama: satu baris ringkas, tanpa kotak/garis pembatas.
+   ========================================================================== */
+.hero-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; background: none; border: 0; border-radius: 0; box-shadow: none; overflow: visible; margin-top: 8px; padding: 12px 0 0; }
+.hero-stats .stat { background: none; padding: 8px 4px; text-align: center; }
+.hero-stats .stat b { font-size: 30px; }
+.hero-stats .stat span { font-size: 13px; margin-top: 4px; }
+.hero-stats .stat em { font-style: normal; }
+.hero-stats .s-short { display: none; }
+@media (max-width: 768px) {
+  .hero-stats { grid-auto-flow: column; grid-template-columns: none; grid-auto-columns: minmax(64px, 1fr); gap: 4px; margin-top: 6px; padding: 10px 0 0; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .hero-stats::-webkit-scrollbar { display: none; }
+  .hero-stats .stat { padding: 4px 2px; }
+  .hero-stats .stat b { font-size: clamp(15px, 4.8vw, 20px); letter-spacing: -.02em; white-space: nowrap; }
+  .hero-stats .stat span { font-size: clamp(9.5px, 2.7vw, 11px); line-height: 1.3; margin-top: 3px; }
+  .hero-stats .s-full { display: none; }
+  .hero-stats .s-short { display: inline; }
+}
