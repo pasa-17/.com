@@ -185,7 +185,7 @@
           '<div class="c-act">' +
           (!lunas ? '<button type="button" class="btn btn-ok btn-sm" data-acc>' + U.icon('check') + ' ACC</button>' : '') +
           (p.statusInfaq !== 'Bukti Ditolak' && p.adaBukti ? '<button type="button" class="btn btn-no btn-sm" data-tolak aria-label="Tolak bukti">' + U.icon('x') + '</button>' : '') +
-          (p.statusInfaq === 'Menunggu Bukti' ? '<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="' + h(M.waLink(p.wa, 'Assalamu\'alaikum, kami dari panitia PASA 17. Mohon lengkapi bukti transfer infaq untuk ananda ' + p.nama + ' (' + p.kode + ').')) + '">' + U.icon('chat') + ' Ingatkan</a>' : '') +
+          (p.statusInfaq === 'Menunggu Bukti' ? '<a class="btn btn-soft btn-sm" target="_blank" rel="noopener" href="' + h(M.waLink(p.wa, 'Assalamu\'alaikum warahmatullahi wabarakatuh. Yth. Bapak/Ibu ' + (p.wali || 'Wali Santri') + ', kami dari panitia PASA 17. Mohon kesediaan Bapak/Ibu untuk melengkapi bukti transfer infaq ananda ' + p.nama + ' (' + p.kode + ') melalui situs pendaftaran. Terima kasih atas perhatian dan kerja samanya. Jazakumullahu khairan.')) + '">' + U.icon('chat') + ' Ingatkan</a>' : '') +
           '<button type="button" class="icon-btn sm" data-edit aria-label="Ubah data ' + h(p.nama) + '">' + U.icon('edit') + '</button></div>' +
           '</article>';
       }
