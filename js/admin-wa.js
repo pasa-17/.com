@@ -309,7 +309,8 @@
         '<div class="inline"><input class="input" id="c_tok" type="password" autocomplete="off" value="' + h(tokDraft) + '" placeholder="' + (C.tokenAda ? 'Ganti token (kosongkan bila tidak diubah)' : 'Tempel token Fonnte') + '" aria-label="Token Fonnte">' + (C.tokenAda ? '<button type="button" class="btn btn-soft" id="cTokDel">Hapus</button>' : '') + '</div>' +
         '<div class="acts left"><button type="button" class="btn btn-soft" id="cDev">' + U.icon('phone') + ' Cek Perangkat</button></div><div id="cDevOut"></div>' +
         '<div class="inline"><input class="input" id="c_to" type="tel" placeholder="081234567890" aria-label="Nomor tes"><button type="button" class="btn btn-dark" id="cTest">Kirim Tes WA</button></div>' +
-        '<div class="form-grid mt">' + M.fieldHtml('c_pan', 'Nomor WhatsApp panitia (penerima notifikasi panitia)', { value: C.waPanitia, type: 'tel', cls: 'span2', help: 'Kosong = pakai WhatsApp panitia di Pengaturan › Beranda & Kontak.' }) +
+        '<div class="form-grid mt">' + M.fieldHtml('c_pan', 'Penerima notifikasi panitia (nomor WhatsApp atau grup)', { value: C.waPanitia, type: 'text', cls: 'span2', help: 'Isi nomor (081234567890) atau pilih grup WhatsApp. Kosong = pakai WhatsApp panitia di Pengaturan › Beranda & Kontak. Untuk grup, nomor pengirim Fonnte harus sudah menjadi anggota grup.' }) +
+        '<div class="field span2"><div class="acts left" style="margin-top:0"><button type="button" class="btn btn-soft btn-sm" id="cGrp">' + U.icon('users') + ' Pilih dari grup WhatsApp</button><button type="button" class="btn btn-soft btn-sm" id="cTesPan">Kirim tes ke penerima ini</button></div><div id="cGrpOut"></div></div>' +
         M.fieldHtml('c_situs', 'Alamat situs (untuk tautan Cek Pendaftaran)', { value: C.situsUrl, cls: 'span2', ph: 'https://pasa-17.github.io/' }) +
         '<div class="field"><span class="lbl">Ukuran batch bawaan</span><div class="seg-batch" id="cBatch">' + [10, 20, 50].map(function (n) { return '<button type="button" data-cb="' + n + '" class="' + (C.batch === n ? 'on' : '') + '">' + n + '</button>'; }).join('') + '</div></div>' +
         M.fieldHtml('c_jeda', 'Jeda antarpesan (detik)', { value: C.jeda, help: 'Mis. 5 atau 3-8.' }) +
@@ -358,10 +359,23 @@
       var ed = t.closest('tr.ed'); if (ed && t.closest('[data-reset]')) { var prev = ed.previousElementSibling.getAttribute('data-ev'), ev2 = C.events.filter(function (x) { return x.kode === prev; })[0]; ev2.pesan = ev2.pesanDefault; ev2.subjek = ev2.subjekDefault; draw(); return; }
       if (t.closest('#cTokDel')) { M.confirm('Hapus token?', 'Notifikasi WhatsApp berhenti sampai token dipasang lagi.', 'Hapus', true).then(function (ok) { if (ok) save({ token: '__HAPUS__', waAktif: false }); }); return; }
       if (t.closest('#cDev')) { var b = t.closest('#cDev'); M.spinBtn(b, true, 'Mengecek…'); M.run('adminGetWaDevice', {}, { timeout: 60000 }).then(function (r) { M.spinBtn(b, false); var o = box.querySelector('#cDevOut'); if (!r || !o) return; var x = r.data; o.innerHTML = '<div class="alert alert-ok">' + U.icon('check-circle') + '<span>Nomor <b>' + h(x.nomor) + '</b> · status <b>' + h(x.status) + '</b> · paket ' + h(x.paket) + ' · kuota ' + h(x.kuota) + (x.kedaluwarsa ? ' · berlaku s/d ' + h(x.kedaluwarsa) : '') + '</span></div>'; }); return; }
+      if (t.closest('#cGrp') || t.closest('[data-grpref]')) {
+        var gb = t.closest('#cGrp') || t.closest('[data-grpref]'), refresh = !!t.closest('[data-grpref]');
+        M.spinBtn(gb, true, 'Membaca grup…');
+        M.run('adminWaGrupList', { segarkan: refresh }, { timeout: 90000 }).then(function (r) {
+          M.spinBtn(gb, false); var o = box.querySelector('#cGrpOut'); if (!o || !r) return;
+          o.innerHTML = '<div class="inline mt"><select class="select sm" id="cGrpSel" aria-label="Pilih grup WhatsApp" style="flex:1;width:auto;min-width:0"><option value="">— pilih grup —</option>' +
+            r.data.rows.map(function (g) { return '<option value="' + h(g.id) + '">' + h(g.name || g.id) + '</option>'; }).join('') + '</select><button type="button" class="btn btn-soft btn-sm" data-grpref>Segarkan</button></div>' +
+            '<p class="help">' + r.data.rows.length + ' grup terbaca. Pilih satu, lalu klik Simpan Konfigurasi.</p>';
+        });
+        return;
+      }
+      if (t.closest('#cTesPan')) { var bp = t.closest('#cTesPan'), tujuan = M.val(box, 'c_pan').trim(); if (!tujuan) { U.toast('Isi dulu nomor atau pilih grup penerima.', 'err'); return; } M.spinBtn(bp, true, 'Mengirim…'); M.run('adminWaUji', { to: tujuan }, { ok: true, timeout: 60000 }).then(function () { M.spinBtn(bp, false); }); return; }
       if (t.closest('#cTest')) { var b2 = t.closest('#cTest'); M.spinBtn(b2, true, 'Mengirim…'); M.run('adminWaUji', { to: M.val(box, 'c_to') }, { ok: true, timeout: 60000 }).then(function () { M.spinBtn(b2, false); }); return; }
       if (t.closest('#cEmTest')) { var b3 = t.closest('#cEmTest'); M.spinBtn(b3, true, 'Mengirim…'); M.run('adminNotifEmailUji', { email: M.val(box, 'c_em') }, { ok: true, timeout: 60000 }).then(function () { M.spinBtn(b3, false); }); return; }
       if (t.closest('#cSave')) save(null);
     });
+    box.addEventListener('change', function (e) { if (e.target.id === 'cGrpSel' && e.target.value) { var pan = box.querySelector('#c_pan'); if (pan) pan.value = e.target.value; } });
     box.addEventListener('input', function (e) {
       var m = /^e_p_(\w+)$/.exec(e.target.id || ''); if (m) { var pv = box.querySelector('#pv_' + m[1]); if (pv) pv.innerHTML = bubble(fill(e.target.value, sample)); }
     });
