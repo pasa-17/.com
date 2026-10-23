@@ -226,7 +226,21 @@
     return ((p[0] || '?').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase();
   }
 
+  // Ikon tab browser mengikuti logo yang diunggah di Pengaturan (dicache agar tab admin & kunjungan berikutnya langsung sama).
+  var LOGO_KEY = 'pasa_logo';
+  function setFavicon(url) {
+    var u = url ? safeUrl(url) : '';
+    try { if (url) localStorage.setItem(LOGO_KEY, u || ''); else u = localStorage.getItem(LOGO_KEY) || ''; } catch (e) { /* abaikan */ }
+    if (!u) return;
+    ['icon', 'apple-touch-icon'].forEach(function (rel) {
+      var l = document.querySelector('link[rel="' + rel + '"]');
+      if (!l) { l = document.createElement('link'); l.rel = rel; document.head.appendChild(l); }
+      l.removeAttribute('type'); l.removeAttribute('sizes'); l.href = u;
+    });
+  }
+
   P.ui = {
+    setFavicon: setFavicon,
     esc: esc, safeUrl: safeUrl, rupiah: rupiah, fmtDate: fmtDate, fmtRange: fmtRange, todayWib: todayWib, countdown: countdown,
     addIcons: function (o) { Object.keys(o).forEach(function (k) { ICONS[k] = o[k]; }); }, icon: icon, art: art, img: img, installSprite: installSprite, toast: toast, copyText: copyText, openModal: openModal,
     showBusy: showBusy, hideBusy: hideBusy, themeNow: themeNow, setTheme: setTheme, initials: initials

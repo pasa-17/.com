@@ -9,6 +9,7 @@
   var cleanup = null, mainEl = null;
 
   U.installSprite();
+  U.setFavicon();
 
   // ---------- layar masuk ----------
   function showLogin(msg) {

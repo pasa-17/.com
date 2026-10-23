@@ -59,6 +59,7 @@
     if (n) n.textContent = p.nama_singkat || 'PASA 17';
     if (s) s.textContent = String(p.lokasi || '').split(/[&,]/)[0].trim();
     var logo = U.safeUrl(p.logo_url);
+    U.setFavicon(logo || '');
     if (m && logo && !m.querySelector('img')) { m.innerHTML = '<img src="' + esc(logo) + '" alt="" referrerpolicy="no-referrer">'; m.querySelector('img').addEventListener('error', function () { m.innerHTML = U.icon('tent'); }); }
   }
 
