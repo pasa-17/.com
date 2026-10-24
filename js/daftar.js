@@ -123,7 +123,7 @@
   // ---------- kerangka ----------
   function banner() {
     var cd = U.countdown(p()), k = pub.kuota || {};
-    return '<section class="reg-banner" aria-labelledby="h-reg"><div><div class="top"><span class="reg-ic">' + U.icon('tent') + '</span><div>' +
+    return '<section class="reg-banner" aria-labelledby="h-reg"><div><div class="top"><span class="reg-ic">' + (U.safeUrl(p().logo_url) ? '<img src="' + esc(U.safeUrl(p().logo_url)) + '" alt="" referrerpolicy="no-referrer">' : U.icon('tent')) + '</span><div>' +
       '<div class="badges">' + S.regBadge(pub) + (pub.pendaftaran.status === 'buka' ? '<span class="badge badge-glass">Kuota tersisa ' + k.sisa + ' santri</span>' : '') + (cd ? '<span class="badge badge-glass">' + U.icon('clock') + ' ' + esc(cd.label) + '</span>' : '') + '</div>' +
       '<h1 id="h-reg">Formulir Peserta ' + esc(p().nama_singkat) + '</h1>' +
       '<p>' + esc(p().lokasi) + ', ' + esc(U.fmtRange(p().tanggal_mulai, p().tanggal_selesai)) + '. Lengkapi formulir bertahap di bawah untuk mencetak e-tiket &amp; QR registrasi santri.</p></div></div></div>' +
