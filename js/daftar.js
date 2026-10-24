@@ -18,7 +18,7 @@
   var st = fresh(), root = null, pub = null, guard = null;
 
   // ---------- alamat berjenjang: provinsi > kota/kab > kecamatan > desa ----------
-  var WIL = 'https://emsifa.github.io/api-wilayah-indonesia/api/';
+  var WIL = 'https://emsifa.com/api-wilayah-indonesia/api/';
   var W = { prov: null, kota: {}, kec: {}, desa: {}, fail: false, busy: {} };
   function titleCase(x) { return String(x || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/\bDki\b/, 'DKI').replace(/\bDi\b/, 'DI'); }
   function wilGet(path) {
