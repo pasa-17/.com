@@ -13,7 +13,7 @@
   var MAX_BYTES = 4 * 1024 * 1024;
 
   function fresh() {
-    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', wali: '', wa: '', email: '', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
+    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', wali: '', wa: '', email: '', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
   }
   var st = fresh(), root = null, pub = null, guard = null;
 
@@ -114,6 +114,7 @@
       h += '<div class="row two">' + fld('tgl_lahir', 'Tanggal Lahir (usia ' + umin + '–' + umax + ' th)', '<input class="input" id="tgl_lahir" name="tgl_lahir" type="date" value="' + esc(d.tgl_lahir) + '" max="' + U.todayWib() + '" aria-describedby="tgl_lahir-h tgl_lahir-e">',
         { req: true, help: '<span id="agePill">' + agePill(a) + '</span>' }) +
         group('jenjang', 'Jenjang', true, '<div class="chips seg"><label class="chip"><input type="radio" name="jenjang" value="SD"' + (d.jenjang === 'SD' ? ' checked' : '') + '><span>SD</span></label><label class="chip"><input type="radio" name="jenjang" value="SMP"' + (d.jenjang === 'SMP' ? ' checked' : '') + '><span>SMP</span></label></div>') + '</div>';
+      if (fc('alamat').tampil) h += '<div class="row">' + fld('alamat', esc(label('alamat', 'Alamat Lengkap Santri')), '<textarea class="textarea" id="alamat" name="alamat" rows="2" maxlength="300" placeholder="Jalan, RT/RW, desa/kelurahan, kecamatan, kota" aria-describedby="alamat-h alamat-e">' + esc(d.alamat) + '</textarea>', { req: fc('alamat').wajib, opt: !fc('alamat').wajib }) + '</div>';
       if (fc('sekolah').tampil) h += '<div class="row">' + fld('sekolah', esc(label('sekolah', 'Asal Sekolah & Tingkat Kelas')), txt('sekolah', 'Contoh: SDIT Al-Ukhuwah / Kelas 5', { max: 120 }), { req: fc('sekolah').wajib, opt: !fc('sekolah').wajib }) + '</div>';
     } else if (st.step === 2) {
       h += '<div class="row">' + fld('wali', 'Nama Wali (Ayah/Ibu)', txt('wali', 'Contoh: Hendra Setiawan', { ac: 'name', max: 100 }), { req: true }) + '</div>' +
@@ -143,7 +144,7 @@
           rows.map(function (r) { return '<div><dt>' + r[0] + '</dt><dd>' + esc(r[1] || '—') + '</dd></div>'; }).join('') + '</div>';
       }
       h += '<dl style="display:grid;gap:12px;margin:0">' +
-        grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah]]) +
+        grp('Santri', 1, [['Nama', d.nama], ['Jenis kelamin', d.gender === 'L' ? 'Ikhwan (L)' : d.gender === 'P' ? 'Akhwat (P)' : ''], ['Tanggal lahir', U.fmtDate(d.tgl_lahir) + (a2 != null ? ' (usia ' + a2 + ' th)' : '')], ['Sekolah', (d.jenjang ? d.jenjang + ' · ' : '') + d.sekolah], ['Alamat', d.alamat]]) +
         grp('Orang tua', 2, [['Wali', d.wali], ['WhatsApp', normWa(d.wa)], ['Email', d.email]]) +
         grp('Kaos & infaq', 4, [['Kaos', z ? z.label + ' (' + z.lebar + ' × ' + z.panjang + ' cm)' : ''], ['Infaq', U.rupiah(amt)], ['Bukti transfer', st.bukti ? st.bukti.nama : '']]) + '</dl>' +
         fld('medis', esc(label('medis', 'Catatan Medis / Alergi')), '<textarea class="textarea" id="medis" name="medis" maxlength="1000" placeholder="Contoh: alergi udang, asma ringan, atau tulis &quot;-&quot; bila tidak ada" aria-describedby="medis-h medis-e">' + esc(d.medis) + '</textarea>',
@@ -182,6 +183,8 @@
       else { var a = ageAtEvent(d.tgl_lahir); if (a < +p().usia_min || a > +p().usia_maks) e.tgl_lahir = 'Usia santri harus ' + p().usia_min + '–' + p().usia_maks + ' tahun pada hari acara.'; }
       if (!d.jenjang) e.jenjang = 'Pilih jenjang SD atau SMP.';
       if (fc('sekolah').tampil && fc('sekolah').wajib && !d.sekolah.trim()) e.sekolah = 'Asal sekolah wajib diisi.';
+      if (fc('alamat').tampil && fc('alamat').wajib && !d.alamat.trim()) e.alamat = 'Alamat wajib diisi.';
+      else if (fc('alamat').tampil && d.alamat.trim() && d.alamat.trim().length < 8) e.alamat = 'Alamat terlalu singkat. Tuliskan alamat lengkap.';
     } else if (step === 2) {
       if (d.wali.trim().length < 3) e.wali = 'Nama wali wajib diisi.';
       if (!/^0\d{8,13}$/.test(normWa(d.wa))) e.wa = 'Nomor WhatsApp tidak valid. Contoh: 081234567890.';
@@ -295,7 +298,7 @@
     if (firstBad) { if (firstBad !== st.step) { st.err = all; goto(firstBad); } else showErrors(all); return; }
     var d = st.d;
     var payload = {
-      nama: d.nama.trim(), panggilan: d.panggilan.trim(), gender: d.gender, tgl_lahir: d.tgl_lahir, jenjang: d.jenjang, sekolah: d.sekolah.trim(),
+      nama: d.nama.trim(), panggilan: d.panggilan.trim(), gender: d.gender, tgl_lahir: d.tgl_lahir, jenjang: d.jenjang, sekolah: d.sekolah.trim(), alamat: d.alamat.trim(),
       wali: d.wali.trim(), wa: normWa(d.wa), email: d.email.trim(), ukuran: d.ukuran, infaq: parseInt(d.infaq, 10), medis: d.medis.trim(),
       setuju: true, bukti: { nama: st.bukti.nama, base64: st.bukti.base64 }
     };

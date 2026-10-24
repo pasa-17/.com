@@ -109,7 +109,7 @@
   // =====================================================================
   var TABS = [['', 'Semua', 'semua'], ['Bukti Sedang Dicek', 'Perlu Verifikasi', 'Bukti Sedang Dicek'], ['Lunas', 'Lunas', 'Lunas'], ['Menunggu Bukti', 'Menunggu Bukti', 'Menunggu Bukti'], ['Bukti Ditolak', 'Ditolak', 'Bukti Ditolak']];
 
-  function blob(p) { return p._s || (p._s = [p.nama, p.panggilan, p.wali, p.kode, p.wa, p.email, p.sekolah].join(' ').toLowerCase()); }
+  function blob(p) { return p._s || (p._s = [p.nama, p.panggilan, p.wali, p.kode, p.wa, p.email, p.sekolah, p.alamat].join(' ').toLowerCase()); }
 
   // Dialog alasan penolakan (dipakai daftar & penampil bukti). cb(alasan) dipanggil saat dikonfirmasi.
   function askReject(ids, nama, cb) {
@@ -305,6 +305,7 @@
         M.fieldHtml('f_tgl', 'Tanggal lahir', { type: 'date', value: p.tglLahir, req: 1 }) +
         '<div class="field"><label class="lbl" for="f_jenjang">Jenjang</label><select class="select" id="f_jenjang"><option value="SD"' + (p.jenjang !== 'SMP' ? ' selected' : '') + '>SD</option><option value="SMP"' + (p.jenjang === 'SMP' ? ' selected' : '') + '>SMP</option></select></div>' +
         M.fieldHtml('f_sekolah', 'Asal sekolah & kelas', { value: p.sekolah, cls: 'span2' }) +
+        M.fieldHtml('f_alamat', 'Alamat lengkap santri', { type: 'textarea', rows: 2, value: p.alamat, cls: 'span2' }) +
         M.fieldHtml('f_wali', 'Nama wali', { value: p.wali, req: 1 }) +
         M.fieldHtml('f_wa', 'WhatsApp wali', { value: p.wa, req: 1, type: 'tel' }) +
         M.fieldHtml('f_email', 'Email wali', { value: p.email, req: 1, type: 'email', cls: 'span2' }) +
@@ -321,7 +322,7 @@
       f.addEventListener('submit', function (ev) {
         ev.preventDefault();
         var v = function (id) { return M.val(m.body, id).trim(); };
-        var d = { nama: v('f_nama'), panggilan: v('f_panggilan'), gender: v('f_gender'), jenjang: v('f_jenjang'), sekolah: v('f_sekolah'), wali: v('f_wali'), wa: v('f_wa'), email: v('f_email'),
+        var d = { nama: v('f_nama'), panggilan: v('f_panggilan'), gender: v('f_gender'), jenjang: v('f_jenjang'), sekolah: v('f_sekolah'), alamat: v('f_alamat'), wali: v('f_wali'), wa: v('f_wa'), email: v('f_email'),
           ukuran: v('f_ukuran'), infaq: v('f_infaq'), medis: v('f_medis'), metodeBayar: v('f_metode'), catatanPanitia: v('f_cat') };
         var btn = m.body.querySelector('#pfOk'); M.spinBtn(btn, true, 'Menyimpan…');
         var call;
@@ -331,7 +332,7 @@
           M.spinBtn(btn, false);
           if (!r) return;
           m.close();
-          if (edit) M.store.patch([p.id], { nama: d.nama, panggilan: d.panggilan, gender: d.gender, jenjang: d.jenjang, sekolah: d.sekolah, wali: d.wali, wa: d.wa, email: d.email, ukuran: d.ukuran, infaq: Number(d.infaq) || 0, medis: d.medis, metodeBayar: d.metodeBayar, catatanPanitia: d.catatanPanitia, tglLahir: d.tglLahir });
+          if (edit) M.store.patch([p.id], { nama: d.nama, panggilan: d.panggilan, gender: d.gender, jenjang: d.jenjang, sekolah: d.sekolah, alamat: d.alamat, wali: d.wali, wa: d.wa, email: d.email, ukuran: d.ukuran, infaq: Number(d.infaq) || 0, medis: d.medis, metodeBayar: d.metodeBayar, catatanPanitia: d.catatanPanitia, tglLahir: d.tglLahir });
           M.store.load(true).catch(function () { });   // selaraskan (usia, kode, dll.) diam-diam
         });
       });
