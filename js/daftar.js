@@ -18,13 +18,19 @@
   var st = fresh(), root = null, pub = null, guard = null;
 
   // ---------- alamat berjenjang: provinsi > kota/kab > kecamatan > desa ----------
-  var WIL = 'https://emsifa.com/api-wilayah-indonesia/api/';
-  var W = { prov: null, kota: {}, kec: {}, desa: {}, fail: false, busy: {} };
+  var WIL_SRC = ['https://emsifa.com/api-wilayah-indonesia/api/', 'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api/', 'https://emsifa.github.io/api-wilayah-indonesia/api/'];
+  var W = { prov: null, kota: {}, kec: {}, desa: {}, fail: false, busy: {}, src: 0 };
   function titleCase(x) { return String(x || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/\bDki\b/, 'DKI').replace(/\bDi\b/, 'DI'); }
-  function wilGet(path) {
-    var c = new AbortController(), tm = setTimeout(function () { c.abort(); }, 12000);
-    return fetch(WIL + path, { signal: c.signal }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (a) { if (!Array.isArray(a)) throw new Error('format'); return a; }, function (e) { clearTimeout(tm); throw e; });
+  function wilGet(path, k) {
+    k = k || 0;
+    var idx = (W.src + k) % WIL_SRC.length;
+    var c = new AbortController(), tm = setTimeout(function () { c.abort(); }, 10000);
+    return fetch(WIL_SRC[idx] + path, { signal: c.signal }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (a) { if (!Array.isArray(a)) throw new Error('format'); W.src = idx; return a; }, function (e) {
+        clearTimeout(tm);
+        if (k + 1 < WIL_SRC.length) return wilGet(path, k + 1);
+        throw e;
+      });
   }
   var WLEVEL = { prov: ['prov', 'provinces.json', null], kota: ['kota', 'regencies/', 'prov'], kec: ['kec', 'districts/', 'kota'], desa: ['desa', 'villages/', 'kec'] };
   function wilList(level) {
