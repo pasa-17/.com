@@ -18,18 +18,26 @@
   var st = fresh(), root = null, pub = null, guard = null;
 
   // ---------- alamat berjenjang: provinsi > kota/kab > kecamatan > desa ----------
-  var WIL_SRC = ['https://emsifa.com/api-wilayah-indonesia/api/', 'https://cdn.jsdelivr.net/gh/emsifa/api-wilayah-indonesia@master/static/api/', 'https://emsifa.github.io/api-wilayah-indonesia/api/'];
+  var WIL_SRC = [
+    { b: 'https://www.emsifa.com/api-wilayah-indonesia/api/', p: { prov: 'provinces.json', kota: 'regencies/{id}.json', kec: 'districts/{id}.json', desa: 'villages/{id}.json' } },
+    { b: 'https://ibnux.github.io/data-indonesia/', p: { prov: 'provinsi.json', kota: 'kabupaten/{id}.json', kec: 'kecamatan/{id}.json', desa: 'kelurahan/{id}.json' } },
+    { b: 'https://emsifa.github.io/api-wilayah-indonesia/api/', p: { prov: 'provinces.json', kota: 'regencies/{id}.json', kec: 'districts/{id}.json', desa: 'villages/{id}.json' } }
+  ];
   var W = { prov: null, kota: {}, kec: {}, desa: {}, fail: false, busy: {}, src: 0 };
   function titleCase(x) { return String(x || '').toLowerCase().replace(/(^|[\s\-\/(])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/\bDki\b/, 'DKI').replace(/\bDi\b/, 'DI'); }
-  function wilGet(path, k) {
+  function wilGet(level, id, k) {
     k = k || 0;
-    var idx = (W.src + k) % WIL_SRC.length;
+    var idx = (W.src + k) % WIL_SRC.length, S = WIL_SRC[idx];
     var c = new AbortController(), tm = setTimeout(function () { c.abort(); }, 10000);
-    return fetch(WIL_SRC[idx] + path, { signal: c.signal }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (a) { if (!Array.isArray(a)) throw new Error('format'); W.src = idx; return a; }, function (e) {
+    return fetch(S.b + S.p[level].replace('{id}', id || ''), { signal: c.signal }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (a) {
+        if (!Array.isArray(a) || !a.length) throw new Error('kosong');
+        W.src = idx;
+        return a.map(function (x) { return { id: String(x.id), name: x.name || x.nama || '' }; });
+      }, function (e) {
         clearTimeout(tm);
         W.err = (W.err ? W.err + ' | ' : '') + idx + ':' + (e && e.message || e);
-        if (k + 1 < WIL_SRC.length) return wilGet(path, k + 1);
+        if (k + 1 < WIL_SRC.length) return wilGet(level, id, k + 1);
         throw e;
       });
   }
@@ -66,7 +74,7 @@
     if ((level === 'prov' && W.prov) || (level !== 'prov' && W[level][par])) { wilFill(level); return; }
     if (W.busy[key]) return;
     W.busy[key] = 1; wilFill(level);
-    wilGet(level === 'prov' ? 'provinces.json' : WLEVEL[level][1] + par + '.json').then(function (a) {
+    wilGet(level, par).then(function (a) {
       if (level === 'prov') W.prov = a; else W[level][par] = a;
       delete W.busy[key]; wilFill(level);
     }, function () {
