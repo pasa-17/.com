@@ -30,7 +30,7 @@
         '<div class="hero-cta">' +
           (open ? '<a class="btn btn-primary btn-lg" href="#/daftar">Daftar Santri Sekarang ' + U.icon('arrow-right') + '</a>'
                 : '<a class="btn btn-primary btn-lg" href="#/cek">Cek Status Pendaftaran ' + U.icon('search') + '</a>') +
-          (p.kontak_wa && open ? '<a class="btn btn-on-navy btn-lg" target="_blank" rel="noopener" href="' + U.esc(S.waLink(p.kontak_wa, 'Assalamu\'alaikum, kami kesulitan mendaftar lewat website ' + (p.nama_singkat || 'PASA') + '. Mohon bantuan pendaftaran ananda.\n\nNama santri:\nNama wali:\nAsal sekolah:\nAlamat (provinsi, kota, kecamatan, desa):\n\nJazakumullahu khairan.')) + '">' + U.icon('help') + ' Daftar Lewat Admin</a>' : '') +
+          (p.kontak_wa && open ? '<a class="btn btn-on-navy btn-lg btn-admin-reg" target="_blank" rel="noopener" href="' + U.esc(S.waLink(p.kontak_wa, 'Assalamu\'alaikum, kami kesulitan mendaftar lewat website ' + (p.nama_singkat || 'PASA') + '. Mohon bantuan pendaftaran ananda.\n\nNama santri:\nNama wali:\nAsal sekolah:\nAlamat (provinsi, kota, kecamatan, desa):\n\nJazakumullahu khairan.')) + '">' + U.icon('help') + ' Daftar Lewat Admin</a>' : '') +
           '<button type="button" class="btn btn-on-navy btn-lg" data-scroll="kegiatan">Pelajari Kegiatan</button>' +
         '</div>' +
       '</div>' +

@@ -165,6 +165,9 @@ button { cursor: pointer; }
 .btn-ghost:hover { background: var(--surface-2); }
 .btn-on-navy { background: transparent; border-color: var(--navy-line); color: var(--on-navy); }
 .btn-on-navy:hover { background: rgba(255, 255, 255, .08); }
+.btn-on-navy.btn-admin-reg { background: rgba(255, 122, 26, .16); border: 2px solid var(--brand, #f26b0f); color: #fff; font-weight: 700; }
+.btn-on-navy.btn-admin-reg:hover { background: rgba(255, 122, 26, .30); }
+.btn-on-navy.btn-admin-reg .i { color: var(--brand, #f26b0f); }
 .btn-soft { background: var(--surface-2); color: var(--ink); }
 .btn-soft:hover { background: var(--line-strong); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: .5; pointer-events: none; }
