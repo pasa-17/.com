@@ -13,7 +13,7 @@
   var MAX_BYTES = 4 * 1024 * 1024;
 
   function fresh() {
-    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', prov: '', kota: '', kec: '', desa: '', alamat_detail: '', wali: '', wa: '', email: '', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
+    return { step: 1, d: { nama: '', panggilan: '', gender: '', tgl_lahir: '', jenjang: '', sekolah: '', alamat: '', prov: '', kota: '', kec: '', desa: '', wali: '', wa: '', email: '', ukuran: '', infaq: '', medis: '', setuju: false }, bukti: null, err: {}, sending: false };
   }
   var st = fresh(), root = null, pub = null, guard = null;
 
@@ -28,6 +28,7 @@
     return fetch(WIL_SRC[idx] + path, { signal: c.signal }).then(function (r) { clearTimeout(tm); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (a) { if (!Array.isArray(a)) throw new Error('format'); W.src = idx; return a; }, function (e) {
         clearTimeout(tm);
+        W.err = (W.err ? W.err + ' | ' : '') + idx + ':' + (e && e.message || e);
         if (k + 1 < WIL_SRC.length) return wilGet(path, k + 1);
         throw e;
       });
@@ -83,9 +84,8 @@
   }
   function composeAlamat() {
     if (!fcAlamatRol()) return;
-    var det = (st.d.alamat_detail || '').trim().replace(/\s+/g, ' ');
-    var parts = [det, wilName('desa') && ('Desa/Kel. ' + wilName('desa')), wilName('kec') && ('Kec. ' + wilName('kec')), wilName('kota'), wilName('prov')].filter(Boolean);
-    st.d.alamat = (st.d.prov && st.d.kota && st.d.kec && st.d.desa && det) ? parts.join(', ') : '';
+    var parts = [wilName('desa') && ('Desa/Kel. ' + wilName('desa')), wilName('kec') && ('Kec. ' + wilName('kec')), wilName('kota'), wilName('prov')].filter(Boolean);
+    st.d.alamat = (st.d.prov && st.d.kota && st.d.kec && st.d.desa) ? parts.join(', ') : '';
   }
 
   // ---------- util ----------
@@ -187,11 +187,10 @@
         group('jenjang', 'Jenjang', true, '<div class="chips seg"><label class="chip"><input type="radio" name="jenjang" value="SD"' + (d.jenjang === 'SD' ? ' checked' : '') + '><span>SD</span></label><label class="chip"><input type="radio" name="jenjang" value="SMP"' + (d.jenjang === 'SMP' ? ' checked' : '') + '><span>SMP</span></label></div>') + '</div>';
       if (fc('alamat').tampil && !W.fail) {
         var wj = fc('alamat').wajib;
-        h += '<div class="row"><div class="alert alert-info">' + U.icon('info') + '<span>Alamat tempat tinggal santri: pilih dari daftar, lalu tulis jalan atau dusunnya.</span></div></div>' +
+        h += '<div class="row"><div class="alert alert-info">' + U.icon('info') + '<span>Alamat tempat tinggal santri: pilih dari daftar mulai dari provinsi sampai desa/kelurahan.</span></div></div>' +
           '<div class="row two">' + wilSel('prov', 'Provinsi', 'Pilih provinsi') + wilSel('kota', 'Kota / Kabupaten', 'Pilih kota / kabupaten') + '</div>' +
-          '<div class="row two">' + wilSel('kec', 'Kecamatan', 'Pilih kecamatan') + wilSel('desa', 'Desa / Kelurahan', 'Pilih desa / kelurahan') + '</div>' +
-          '<div class="row">' + fld('alamat_detail', 'Jalan, RT/RW, Dusun / Nomor Rumah', txt('alamat_detail', 'Contoh: Jl. Mawar No. 5, RT 02/RW 03', { max: 120 }), { req: true }) + '</div>';
-      } else if (fc('alamat').tampil) h += '<div class="row">' + fld('alamat', esc(label('alamat', 'Alamat Lengkap Santri')), '<textarea class="textarea" id="alamat" name="alamat" rows="2" maxlength="300" placeholder="Jalan, RT/RW, desa/kelurahan, kecamatan, kota, provinsi" aria-describedby="alamat-h alamat-e">' + esc(d.alamat) + '</textarea>', { req: fc('alamat').wajib, opt: !fc('alamat').wajib }) + '</div>';
+          '<div class="row two">' + wilSel('kec', 'Kecamatan', 'Pilih kecamatan') + wilSel('desa', 'Desa / Kelurahan', 'Pilih desa / kelurahan') + '</div>';
+      } else if (fc('alamat').tampil) h += (W.fail ? '<div class="row"><div class="alert alert-warn">' + U.icon('alert') + '<span>Daftar wilayah belum bisa dimuat. Silakan ketik alamat lengkap. <small>(' + esc(String(W.err || '')) + ')</small></span></div></div>' : '') + '<div class="row">' + fld('alamat', esc(label('alamat', 'Alamat Lengkap Santri')), '<textarea class="textarea" id="alamat" name="alamat" rows="2" maxlength="300" placeholder="Jalan, RT/RW, desa/kelurahan, kecamatan, kota, provinsi" aria-describedby="alamat-h alamat-e">' + esc(d.alamat) + '</textarea>', { req: fc('alamat').wajib, opt: !fc('alamat').wajib }) + '</div>';
       if (fc('sekolah').tampil) h += '<div class="row">' + fld('sekolah', esc(label('sekolah', 'Asal Sekolah & Tingkat Kelas')), txt('sekolah', 'Contoh: SDIT Al-Ukhuwah / Kelas 5', { max: 120 }), { req: fc('sekolah').wajib, opt: !fc('sekolah').wajib }) + '</div>';
     } else if (st.step === 2) {
       h += '<div class="row">' + fld('wali', 'Nama Wali (Ayah/Ibu)', txt('wali', 'Contoh: Hendra Setiawan', { ac: 'name', max: 100 }), { req: true }) + '</div>' +
@@ -265,7 +264,6 @@
         if (!d.kota) e.kota = 'Pilih kota atau kabupaten.';
         if (!d.kec) e.kec = 'Pilih kecamatan.';
         if (!d.desa) e.desa = 'Pilih desa atau kelurahan.';
-        if ((d.alamat_detail || '').trim().length < 4) e.alamat_detail = 'Tulis jalan, RT/RW atau dusun.';
         composeAlamat();
       } else if (fc('alamat').tampil && fc('alamat').wajib && !d.alamat.trim()) e.alamat = 'Alamat wajib diisi.';
       else if (fc('alamat').tampil && d.alamat.trim() && d.alamat.trim().length < 8) e.alamat = 'Alamat terlalu singkat. Tuliskan alamat lengkap.';
@@ -426,7 +424,7 @@
     st.d[n] = t.type === 'checkbox' ? t.checked : t.value;
     clearErr(n);
     if (n === 'tgl_lahir') { var pill = root.querySelector('#agePill'); if (pill) pill.innerHTML = agePill(ageAtEvent(t.value)); }
-    if (n === 'prov' || n === 'kota' || n === 'kec') wilChange(n); else if (n === 'desa' || n === 'alamat_detail') composeAlamat();
+    if (n === 'prov' || n === 'kota' || n === 'kec') wilChange(n); else if (n === 'desa') composeAlamat();
     updateSummary();
   }
   function onClick(e) {
